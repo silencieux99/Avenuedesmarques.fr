@@ -1,302 +1,170 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCategories } from '@/lib/firestore/categories/read';
 import { updateCategory } from '@/lib/firestore/categories/write';
-import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronRight, ChevronDown, FolderOpen, Folder, X, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
-function SortableCategory({ category, children, level = 0, isExpanded, onToggle, onRemoveParent, onMakeChild }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: category.id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-    };
-
-    const hasChildren = children && children.length > 0;
-
-    return (
-        <div ref={setNodeRef} style={style} className="mb-1">
-            <div
-                className={`flex items-center gap-2 p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors ${isDragging ? 'shadow-lg' : ''
-                    }`}
-                style={{ marginLeft: `${level * 24}px` }}
-            >
-                {/* Drag Handle */}
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-gray-200 rounded"
-                >
-                    <GripVertical size={18} className="text-gray-400" />
-                </div>
-
-                {/* Expand/Collapse Button */}
-                {hasChildren ? (
-                    <button
-                        onClick={() => onToggle(category.id)}
-                        className="p-1 hover:bg-gray-200 rounded"
-                    >
-                        {isExpanded ? (
-                            <ChevronDown size={18} className="text-gray-600" />
-                        ) : (
-                            <ChevronRight size={18} className="text-gray-600" />
-                        )}
-                    </button>
-                ) : (
-                    <div className="w-[26px]" />
-                )}
-
-                {/* Icon */}
-                <div className="text-gray-500">
-                    {hasChildren ? (
-                        isExpanded ? <FolderOpen size={18} /> : <Folder size={18} />
-                    ) : (
-                        <div className="w-[18px]" />
-                    )}
-                </div>
-
-                {/* Category Name */}
-                <div className="flex-1">
-                    <span className="font-medium text-gray-900">{category.name}</span>
-                    {category.parentId && (
-                        <span className="ml-2 text-xs text-gray-400">(sous-catégorie)</span>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                    {/* Remove from parent button */}
-                    {category.parentId && (
-                        <button
-                            onClick={() => onRemoveParent(category.id)}
-                            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded flex items-center gap-1"
-                            title="Retirer de la catégorie parente"
-                        >
-                            <ArrowUpRight size={14} />
-                            Sortir
-                        </button>
-                    )}
-
-                    {/* Edit Link */}
-                    <Link
-                        href={`/admin/categories?id=${category.id}`}
-                        className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                    >
-                        Modifier
-                    </Link>
-                </div>
-            </div>
-
-            {/* Children */}
-            {hasChildren && isExpanded && (
-                <div className="mt-1">
-                    {children.map((child) => (
-                        <SortableCategory
-                            key={child.category.id}
-                            category={child.category}
-                            children={child.children}
-                            level={level + 1}
-                            isExpanded={child.isExpanded}
-                            onToggle={onToggle}
-                            onRemoveParent={onRemoveParent}
-                            onMakeChild={onMakeChild}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
 export default function CategoryManager() {
     const { data: categories, isLoading } = useCategories();
-    const [categoryTree, setCategoryTree] = useState([]);
-    const [expandedIds, setExpandedIds] = useState(new Set());
-    const [dragMode, setDragMode] = useState('reorder'); // 'reorder' or 'nest'
+    const [selectedParentId, setSelectedParentId] = useState(null);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 200,
-                tolerance: 8,
-            },
-        })
-    );
+    if (isLoading) {
+        return <div className="p-8 text-center text-gray-500">Chargement...</div>;
+    }
 
-    // Build category tree
-    useEffect(() => {
-        if (!categories) return;
+    // Grouper les catégories
+    const rootCategories = categories?.filter(c => !c.parentId) || [];
+    const childCategories = categories?.filter(c => c.parentId === selectedParentId) || [];
 
-        const buildTree = (parentId = null) => {
-            return categories
-                .filter(cat => cat.parentId === parentId)
-                .map(cat => ({
-                    category: cat,
-                    children: buildTree(cat.id),
-                    isExpanded: expandedIds.has(cat.id),
-                }));
-        };
-
-        setCategoryTree(buildTree());
-    }, [categories, expandedIds]);
-
-    const toggleExpand = (id) => {
-        setExpandedIds(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) {
-                newSet.delete(id);
-            } else {
-                newSet.add(id);
-            }
-            return newSet;
-        });
-    };
-
-    const handleRemoveParent = async (categoryId) => {
-        const category = categories.find(c => c.id === categoryId);
-        if (!category) return;
-
+    // Fonction pour changer le parent
+    const handleAssignParent = async (categoryId, newParentId) => {
         try {
+            if (categoryId === newParentId) return; // Impossible d'être son propre parent
+
+            const category = categories.find(c => c.id === categoryId);
             await updateCategory({
-                data: {
-                    ...category,
-                    parentId: null,
-                },
+                data: { ...category, parentId: newParentId }
             });
-            toast.success(`${category.name} est maintenant une catégorie principale`);
-        } catch (error) {
-            toast.error('Erreur lors de la modification');
-            console.error(error);
-        }
-    };
-
-    const handleDragEnd = async (event) => {
-        const { active, over } = event;
-
-        if (!over || active.id === over.id) return;
-
-        const activeCategory = categories.find(c => c.id === active.id);
-        const overCategory = categories.find(c => c.id === over.id);
-
-        if (!activeCategory || !overCategory) return;
-
-        // Prevent making a category a child of itself or its own children
-        const isDescendant = (parentId, childId) => {
-            const parent = categories.find(c => c.id === parentId);
-            if (!parent) return false;
-            if (parent.parentId === childId) return true;
-            if (parent.parentId) return isDescendant(parent.parentId, childId);
-            return false;
-        };
-
-        if (isDescendant(overCategory.id, activeCategory.id)) {
-            toast.error('Impossible : créerait une boucle de catégories');
-            return;
-        }
-
-        try {
-            // Make active category a child of over category
-            await updateCategory({
-                data: {
-                    ...activeCategory,
-                    parentId: overCategory.id,
-                },
-            });
-            toast.success(`${activeCategory.name} déplacé sous ${overCategory.name}`);
-
-            // Auto-expand the parent
-            setExpandedIds(prev => new Set([...prev, overCategory.id]));
+            toast.success('Catégorie déplacée avec succès !');
         } catch (error) {
             toast.error('Erreur lors du déplacement');
             console.error(error);
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="text-gray-500">Chargement...</div>
-            </div>
-        );
-    }
-
-    const flatCategories = categories || [];
-
     return (
-        <div className="p-5">
+        <div className="p-4 md:p-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Gestion des Catégories</h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Glissez une catégorie sur une autre pour créer une sous-catégorie
-                    </p>
+                    <h1 className="text-2xl font-bold font-serif">Organisation des Catégories</h1>
+                    <p className="text-sm text-gray-500 mt-1">Sélectionnez une catégorie principale pour voir et gérer ses sous-catégories.</p>
                 </div>
                 <Link
                     href="/admin/categories"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                    Retour à la liste
+                    Retour
                 </Link>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
-                <h3 className="font-semibold mb-2 text-blue-900">💡 Comment utiliser :</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• <strong>Créer une sous-catégorie</strong> : Glissez une catégorie sur une autre</li>
-                    <li>• <strong>Retirer une sous-catégorie</strong> : Cliquez sur le bouton "Sortir"</li>
-                    <li>• <strong>Sur mobile</strong> : Maintenez appuyé 200ms avant de glisser</li>
-                    <li>• <strong>Déplier/Replier</strong> : Cliquez sur les flèches</li>
-                </ul>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
 
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={flatCategories.map(c => c.id)}
-                    strategy={verticalListSortingStrategy}
-                >
-                    <div className="space-y-2">
-                        {categoryTree.map((item) => (
-                            <SortableCategory
-                                key={item.category.id}
-                                category={item.category}
-                                children={item.children}
-                                isExpanded={item.isExpanded}
-                                onToggle={toggleExpand}
-                                onRemoveParent={handleRemoveParent}
-                            />
-                        ))}
+                {/* COLONNE GAUCHE : Catégories Principales */}
+                <div className="bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm">
+                    <div className="p-4 bg-gray-50 border-b font-medium text-gray-700 flex justify-between items-center">
+                        <span>📂 Catégories Principales (Parents)</span>
+                        <span className="text-xs bg-gray-200 px-2 py-1 rounded-full">{rootCategories.length}</span>
                     </div>
-                </SortableContext>
-            </DndContext>
+                    <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                        {rootCategories.map((cat) => (
+                            <div
+                                key={cat.id}
+                                onClick={() => setSelectedParentId(cat.id)}
+                                className={`
+                  flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                  ${selectedParentId === cat.id
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm ring-1 ring-blue-200'
+                                        : 'hover:bg-gray-50 text-gray-700 border border-transparent'}
+                `}
+                            >
+                                <div className="flex items-center gap-3">
+                                    {selectedParentId === cat.id ? <FolderOpen size={20} /> : <Folder size={20} />}
+                                    <span className="font-medium">{cat.name}</span>
+                                </div>
+                                <ChevronRight size={16} className={`text-gray-400 ${selectedParentId === cat.id ? 'text-blue-500' : ''}`} />
+                            </div>
+                        ))}
 
-            {flatCategories.length === 0 && (
-                <div className="text-center py-12 text-gray-400">
-                    Aucune catégorie trouvée
+                        {/* Zone pour remettre à la racine */}
+                        <div className="mt-4 pt-4 border-t px-2">
+                            <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Orphelins / À classer</p>
+                            {categories?.filter(c => c.parentId && !rootCategories.find(r => r.id === c.parentId)).map(orphan => (
+                                <div key={orphan.id} className="p-2 bg-red-50 text-red-600 rounded mb-1 text-sm flex justify-between items-center">
+                                    <span>{orphan.name}</span>
+                                    <button
+                                        onClick={() => handleAssignParent(orphan.id, null)}
+                                        className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-100"
+                                    >
+                                        Mettre en racine
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            )}
+
+                {/* COLONNE DROITE : Sous-catégories / Contenu */}
+                <div className="bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm">
+                    <div className="p-4 bg-gray-50 border-b font-medium text-gray-700 flex items-center gap-2">
+                        <span>↳ Sous-catégories de</span>
+                        <span className="font-bold text-blue-600">
+                            {categories?.find(c => c.id === selectedParentId)?.name || '...'}
+                        </span>
+                    </div>
+
+                    <div className="overflow-y-auto flex-1 p-4 bg-gray-50/50">
+                        {selectedParentId ? (
+                            <div className="space-y-4">
+                                {/* 1. Liste des enfants actuels */}
+                                <div className="bg-white p-4 rounded-lg border shadow-sm">
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">Actuellement ici :</h3>
+                                    {childCategories.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {childCategories.map(child => (
+                                                <div key={child.id} className="flex justify-between items-center p-2 bg-gray-50 rounded border group hover:border-blue-300 transition-colors">
+                                                    <span className="font-medium">{child.name}</span>
+                                                    <button
+                                                        onClick={() => handleAssignParent(child.id, null)}
+                                                        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                                                    >
+                                                        Sortir d'ici
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic text-center py-4">Aucune sous-catégorie pour le moment.</p>
+                                    )}
+                                </div>
+
+                                {/* 2. Ajouter d'autres catégories ici */}
+                                <div className="bg-white p-4 rounded-lg border shadow-sm">
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">Ajouter à ce dossier :</h3>
+                                    <select
+                                        className="w-full p-2 border rounded-lg text-sm mb-2"
+                                        onChange={(e) => {
+                                            if (e.target.value) handleAssignParent(e.target.value, selectedParentId);
+                                            e.target.value = ""; // reset
+                                        }}
+                                    >
+                                        <option value="">+ Choisir une catégorie à déplacer ici...</option>
+                                        {rootCategories
+                                            .filter(c => c.id !== selectedParentId) // Pas soi-même
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(c => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                    </select>
+                                    <p className="text-xs text-gray-400">
+                                        Sélectionnez une catégorie principale pour la déplacer à l'intérieur de <strong>{categories?.find(c => c.id === selectedParentId)?.name}</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-gray-400 text-center p-8">
+                                <FolderOpen size={48} className="mb-4 text-gray-200" />
+                                <p>Sélectionnez une catégorie à gauche<br />pour gérer son contenu.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+            </div>
         </div>
     );
 }
