@@ -18,12 +18,20 @@ import {
   Image,
   Input,
   Select,
-  SelectItem
+  SelectItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
 } from "@nextui-org/react";
-import { Edit2, Trash2, Search, X } from "lucide-react";
+import { Edit2, Trash2, Search, X, FolderInput } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
+import { writeBatch, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function ListView() {
   const [pageLimit, setPageLimit] = useState(20); // More items by default
@@ -33,6 +41,12 @@ export default function ListView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
+
+  // Bulk Selection States
+  const [selectedKeys, setSelectedKeys] = useState(new Set([]));
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [targetCategory, setTargetCategory] = useState("");
+  const [isMoving, setIsMoving] = useState(false);
 
   const router = useRouter();
 
@@ -83,8 +97,7 @@ export default function ListView() {
         return false;
       }
 
-      // 3. Brand Filter (Assuming brandId is stored, otherwise strictly string match on brand name?)
-      // Check data structure: product usually has brandId.
+      // 3. Brand Filter
       if (selectedBrand && product.brandId !== selectedBrand) {
         return false;
       }
@@ -92,6 +105,41 @@ export default function ListView() {
       return true;
     });
   }, [products, searchQuery, selectedCategory, selectedBrand]);
+
+  const handleBulkMove = async (onClose) => {
+    if (!targetCategory) return toast.error("Veuillez sélectionner une catégorie cible");
+
+    setIsMoving(true);
+    try {
+      const batch = writeBatch(db);
+
+      const keysToMove = selectedKeys === "all"
+        ? filteredProducts.map(p => p.id)
+        : Array.from(selectedKeys);
+
+      if (keysToMove.length === 0) {
+        setIsMoving(false);
+        return toast.error("Aucun produit sélectionné");
+      }
+
+      keysToMove.forEach(id => {
+        const ref = doc(db, "products", id);
+        batch.update(ref, { categoryId: targetCategory });
+      });
+
+      await batch.commit();
+
+      toast.success(`${keysToMove.length} produits déplacés avec succès !`);
+      setSelectedKeys(new Set([])); // Reset selection
+      onClose(); // Close modal
+      // Ideally trigger a refresh here, but SWR might handle it eventually or we rely on local updates from Firestore subscription
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors du déplacement : " + e.message);
+    } finally {
+      setIsMoving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -103,6 +151,9 @@ export default function ListView() {
   if (error) {
     return <div>{error}</div>;
   }
+
+  // Calculate selected count
+  const selectedCount = selectedKeys === "all" ? filteredProducts.length : selectedKeys.size;
 
   return (
     <div className="flex-1 flex flex-col gap-4 md:pr-5 md:px-0 px-5 rounded-xl w-full">
@@ -120,7 +171,22 @@ export default function ListView() {
             isClearable
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto items-center">
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2 mr-2 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
+              <span className="text-xs font-semibold text-blue-600">{selectedCount} sélectionné(s)</span>
+              <Button
+                size="sm"
+                color="primary"
+                variant="flat"
+                startContent={<FolderInput size={14} />}
+                onPress={onOpen}
+              >
+                Déplacer
+              </Button>
+            </div>
+          )}
+
           <select
             className="border rounded-lg px-3 py-2 text-sm outline-none bg-gray-50 focus:bg-white transition-colors"
             value={selectedCategory}
@@ -151,7 +217,13 @@ export default function ListView() {
         </div>
       </div>
 
-      <Table aria-label="Liste des produits">
+      <Table
+        aria-label="Liste des produits"
+        selectionMode="multiple"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        color="primary"
+      >
         <TableHeader>
           <TableColumn>PRODUIT</TableColumn>
           <TableColumn>PRIX</TableColumn>
@@ -178,7 +250,6 @@ export default function ListView() {
                       {item?.isFeatured && (
                         <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 rounded border border-blue-100">Star</span>
                       )}
-                      {/* Display Brand Name if available */}
                       {item?.brandId && (
                         <span className="text-[9px] text-gray-500 bg-gray-50 px-1.5 rounded">{brands?.find(b => b.id === item.brandId)?.name}</span>
                       )}
@@ -195,7 +266,6 @@ export default function ListView() {
                   ) : (
                     <span className="text-gray-400 text-xs italic">N/A</span>
                   )}
-                  {/* Note: salePrice is now deprecated/merged to price, but strictly we display 'price' */}
                 </div>
               </TableCell>
               <TableCell>
@@ -267,6 +337,43 @@ export default function ListView() {
           Suivant
         </Button>
       </div>
+
+      {/* MOVE CATEGORY MODAL */}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Déplacer {selectedCount} produit(s)</ModalHeader>
+              <ModalBody>
+                <p className="text-xs text-gray-500 mb-2">
+                  Sélectionnez la nouvelle catégorie pour les produits sélectionnés.
+                </p>
+                <Select
+                  label="Nouvelle Catégorie"
+                  placeholder="Choisir une catégorie"
+                  selectedKeys={targetCategory ? [targetCategory] : []}
+                  onChange={(e) => setTargetCategory(e.target.value)}
+                >
+                  {categories?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Annuler
+                </Button>
+                <Button color="primary" onPress={() => handleBulkMove(onClose)} isLoading={isMoving}>
+                  Confirmer le déplacement
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
     </div>
   );
 }
