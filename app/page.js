@@ -1,8 +1,8 @@
 import {
   getFeaturedProducts,
   getProducts,
-  getHeroProducts,
 } from "@/lib/firestore/products/read_server";
+import { getHeroSlides } from "@/lib/firestore/hero/read_server";
 import Link from "next/link";
 import { ProductCard } from "./components/Products";
 import Header from "./components/Header";
@@ -17,14 +17,14 @@ import Footer from "./components/Footer";
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const [featuredProducts, collections, categories, products, brands, heroProducts] =
+  const [featuredProducts, collections, categories, products, brands, heroSlides] =
     await Promise.all([
       getFeaturedProducts(),
       getCollections(),
       getCategories(),
       getProducts(),
       getBrands(),
-      getHeroProducts(),
+      getHeroSlides(),
     ]);
 
   // Group products by category
@@ -43,7 +43,7 @@ export default async function Home() {
     <main className="min-h-screen flex flex-col bg-background font-sans text-foreground">
       <Header />
       <div className="pt-8">
-        <HeroModern heroProducts={heroProducts} />
+        <HeroModern heroSlides={heroSlides} />
         <div className="flex flex-col gap-12 md:gap-20 pb-16 md:pb-20">
 
           <Collections collections={collections} />

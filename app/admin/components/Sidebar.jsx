@@ -28,6 +28,7 @@ export default function Sidebar() {
     { name: "Clients", link: "/admin/customers", icon: <Users className="h-4 w-4" /> },
     { name: "Avis", link: "/admin/reviews", icon: <Star className="h-4 w-4" /> },
     { name: "Collections", link: "/admin/collections", icon: <LibraryBig className="h-4 w-4" /> },
+    { name: "Carrousel (Hero)", link: "/admin/hero", icon: <Star className="h-4 w-4" /> },
     { name: "Admins", link: "/admin/admins", icon: <ShieldCheck className="h-4 w-4" /> },
   ];
 
