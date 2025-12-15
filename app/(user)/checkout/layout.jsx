@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useUser } from "@/lib/firestore/user/read";
 import { CircularProgress } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Layout({ children }) {
   const searchParams = useSearchParams();
@@ -11,34 +12,30 @@ export default function Layout({ children }) {
   const productId = searchParams.get("productId");
 
   const { user } = useAuth();
-  const { data, error, isLoading } = useUser({ uid: user?.uid });
+  const { cart, cartCount } = useCart();
 
-  if (isLoading) {
+  // Only check cart for cart-type checkout
+  if (type === "cart" && cartCount === 0) {
     return (
-      <div>
-        <CircularProgress />
+      <div className="h-screen w-full flex flex-col gap-3 justify-center items-center">
+        <h2 className="text-xl font-medium">Votre panier est vide</h2>
+        <Link href="/" className="text-white bg-black px-6 py-3 text-sm rounded-lg hover:bg-gray-800 transition-colors">
+          Continuer vos achats
+        </Link>
       </div>
     );
   }
 
-  if (error) {
-    return <div>{error}</div>;
-  }
-
-  if (type === "cart" && (!data?.carts || data?.carts?.length === 0)) {
-    return (
-      <div>
-        <h2>Your Cart Is Empty</h2>
-      </div>
-    );
-  }
   if (type === "buynow" && !productId) {
     return (
-      <div>
-        <h2>Product Not Found!</h2>
+      <div className="h-screen w-full flex flex-col gap-3 justify-center items-center">
+        <h2 className="text-xl font-medium">Produit non trouvé !</h2>
+        <Link href="/" className="text-white bg-black px-6 py-3 text-sm rounded-lg hover:bg-gray-800 transition-colors">
+          Retour à l'accueil
+        </Link>
       </div>
     );
   }
-  
+
   return <>{children}</>;
 }

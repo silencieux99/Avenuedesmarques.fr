@@ -1,41 +1,30 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { useUser } from "@/lib/firestore/user/read";
-import { updateCarts } from "@/lib/firestore/user/write";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@nextui-org/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useRouter } from "next/navigation";
 
 export default function AddToCartButton({ productId, type }) {
-  const { user } = useAuth();
-  const { data } = useUser({ uid: user?.uid });
+  const { cart, addToCart, removeFromCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const isAdded = data?.carts?.find((item) => item?.id === productId);
+  const isAdded = cart?.find((item) => item?.id === productId);
 
-  const handlClick = async () => {
+  const handleClick = async () => {
     setIsLoading(true);
     try {
-      if (!user?.uid) {
-        router.push("/login");
-        throw new Error("Please Logged In First!");
-      }
       if (isAdded) {
-        const newList = data?.carts?.filter((item) => item?.id != productId);
-        await updateCarts({ list: newList, uid: user?.uid });
+        await removeFromCart(productId);
+        toast.success("Produit retiré du panier");
       } else {
-        await updateCarts({
-          list: [...(data?.carts ?? []), { id: productId, quantity: 1 }],
-          uid: user?.uid,
-        });
+        await addToCart(productId, 1);
+        toast.success("Produit ajouté au panier");
       }
     } catch (error) {
-      toast.error(error?.message);
+      toast.error(error?.message || "Une erreur est survenue");
     }
     setIsLoading(false);
   };
@@ -45,12 +34,12 @@ export default function AddToCartButton({ productId, type }) {
       <Button
         isLoading={isLoading}
         isDisabled={isLoading}
-        onClick={handlClick}
+        onClick={handleClick}
         variant="bordered"
         className=""
       >
-        {!isAdded && "Add To Cart"}
-        {isAdded && "Click To Remove"}
+        {!isAdded && "Ajouter au panier"}
+        {isAdded && "Retirer du panier"}
       </Button>
     );
   }
@@ -60,7 +49,7 @@ export default function AddToCartButton({ productId, type }) {
       <Button
         isLoading={isLoading}
         isDisabled={isLoading}
-        onClick={handlClick}
+        onClick={handleClick}
         variant="bordered"
         className=""
         color="primary"
@@ -68,8 +57,8 @@ export default function AddToCartButton({ productId, type }) {
       >
         {!isAdded && <AddShoppingCartIcon className="text-xs" />}
         {isAdded && <ShoppingCartIcon className="text-xs" />}
-        {!isAdded && "Add To Cart"}
-        {isAdded && "Click To Remove"}
+        {!isAdded && "Ajouter au panier"}
+        {isAdded && "Retirer du panier"}
       </Button>
     );
   }
@@ -78,7 +67,7 @@ export default function AddToCartButton({ productId, type }) {
     <Button
       isLoading={isLoading}
       isDisabled={isLoading}
-      onClick={handlClick}
+      onClick={handleClick}
       variant="flat"
       isIconOnly
       size="sm"

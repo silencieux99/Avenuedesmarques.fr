@@ -12,7 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from "@/lib/firestore/user/read";
-import { updateCarts, updateFavorites } from "@/lib/firestore/user/write";
+import { updateFavorites } from "@/lib/firestore/user/write";
+import { useCart } from '@/contexts/CartContext';
 
 import {
     VerticalGallery,
@@ -25,6 +26,7 @@ import {
 export default function ProductClientPage({ product }) {
     const { user } = useAuth();
     const { data: userData } = useUser({ uid: user?.uid });
+    const { cart, addToCart: addToCartContext } = useCart();
     const router = useRouter();
 
     // Selection State
@@ -36,36 +38,11 @@ export default function ProductClientPage({ product }) {
     const currentPrice = product?.price;
 
     const isInWishlist = userData?.favorites?.includes(product?.id);
-    const isAddedToCart = userData?.carts?.find((item) => item?.id === product?.id);
+    const isAddedToCart = cart?.find((item) => item?.id === product?.id);
 
     const handleAddToCart = async () => {
-        if (!user?.uid) {
-            router.push("/login");
-            toast.error("Veuillez vous connecter pour ajouter au panier");
-            return;
-        }
-
         try {
-            let newList;
-            if (isAddedToCart) {
-                // Option to remove or just update quantity? 
-                // Logic in amiratshop was "Add", logic in Avenuedesmarques AddToCartButton is "Toggle".
-                // Typically "Add to Cart" should add.
-                // If already in cart, maybe increase quantity? 
-                // Existing AddToCartButton removes it. That's weird for a product page button.
-                // Use standard "Add" logic: if exists, update quantity. If not, add.
-
-                const existingItem = userData?.carts?.find(item => item.id === product.id);
-                const newQuantity = (existingItem?.quantity || 0) + quantity;
-
-                newList = userData?.carts?.map(item =>
-                    item.id === product.id ? { ...item, quantity: newQuantity } : item
-                );
-            } else {
-                newList = [...(userData?.carts ?? []), { id: product.id, quantity: quantity }];
-            }
-
-            await updateCarts({ list: newList, uid: user?.uid });
+            await addToCartContext(product.id, quantity);
 
             toast.custom((t) => (
                 <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-black text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4`}>

@@ -2,21 +2,23 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useProductsByIds } from "@/lib/firestore/products/read";
-import { useUser } from "@/lib/firestore/user/read";
 import { CircularProgress } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
 import Checkout from "./components/Checkout";
+import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Page() {
   const { user } = useAuth();
-  const { data } = useUser({ uid: user?.uid });
+  const { cart } = useCart();
 
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
   const productId = searchParams.get("productId");
 
+  // Get product IDs from cart or single product for "buynow"
   const productIdsList =
-    type === "buynow" ? [productId] : data?.carts?.map((item) => item?.id);
+    type === "buynow" ? [productId] : cart?.map((item) => item?.id);
 
   const {
     data: products,
@@ -28,7 +30,7 @@ export default function Page() {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="h-screen w-full flex justify-center items-center">
         <CircularProgress />
       </div>
     );
@@ -38,10 +40,13 @@ export default function Page() {
     return <div>{error}</div>;
   }
 
-  if (!productIdsList && productIdsList?.length === 0) {
+  if (!productIdsList || productIdsList?.length === 0) {
     return (
-      <div>
-        <h1>Products Not Found</h1>
+      <div className="h-screen w-full flex flex-col gap-3 justify-center items-center">
+        <h1 className="text-xl font-medium">Produits non trouvés</h1>
+        <Link href="/" className="text-white bg-black px-6 py-3 text-sm rounded-lg hover:bg-gray-800 transition-colors">
+          Retour à l'accueil
+        </Link>
       </div>
     );
   }
@@ -55,7 +60,7 @@ export default function Page() {
           product: products[0],
         },
       ]
-      : data?.carts?.map((item) => {
+      : cart?.map((item) => {
         return {
           ...item,
           product: products?.find((e) => e?.id === item?.id),

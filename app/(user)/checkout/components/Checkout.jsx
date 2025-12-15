@@ -38,6 +38,9 @@ export default function Checkout({ productList }) {
       if (subTotal <= 0) {
         throw new Error("Price should be greater than 0");
       }
+      if (!address?.email) {
+        throw new Error("Veuillez renseigner votre email.");
+      }
       if (!address?.fullName || !address?.addressLine1 || !address?.city || !address?.pincode || !address?.country) {
         throw new Error("Veuillez remplir tous les champs obligatoires (adresse, ville, code postal, pays).");
       }
@@ -54,14 +57,14 @@ export default function Checkout({ productList }) {
 
       if (paymentMode === "prepaid") {
         const url = await createCheckoutAndGetURL({
-          uid: user?.uid,
+          uid: user?.uid || null,
           products: productList,
           address: finalAddress,
         });
         router.push(url);
       } else {
         const checkoutId = await createCheckoutCODAndGetId({
-          uid: user?.uid,
+          uid: user?.uid || null,
           products: productList,
           address: finalAddress,
         });

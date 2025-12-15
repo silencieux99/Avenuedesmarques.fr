@@ -26,7 +26,10 @@ export const createCheckoutAndGetURL = async ({ uid, products, address }) => {
 export const createCheckoutCODAndGetId = async ({ uid, products, address }) => {
   const checkoutId = `cod_${doc(collection(db, `ids`)).id}`;
 
-  const ref = doc(db, `users/${uid}/checkout_sessions_cod/${checkoutId}`);
+  // For guest users, store in a separate collection
+  const ref = uid
+    ? doc(db, `users/${uid}/checkout_sessions_cod/${checkoutId}`)
+    : doc(db, `guest_orders/${checkoutId}`);
 
   let line_items = [];
 
@@ -69,7 +72,8 @@ export const createCheckoutCODAndGetId = async ({ uid, products, address }) => {
     line_items: line_items,
     metadata: {
       checkoutId: checkoutId,
-      uid: uid,
+      uid: uid || null,
+      isGuest: !uid,
       address: JSON.stringify(address),
     },
     createdAt: Timestamp.now(),

@@ -22,6 +22,11 @@ export default function Layout({ children }) {
 
 function UserChecking({ children }) {
   const { user, isLoading } = useAuth();
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  // Allow guest checkout
+  const isCheckoutPage = pathname.includes('/checkout');
+
   if (isLoading) {
     return (
       <div className="h-screen w-full flex justify-center items-center">
@@ -29,13 +34,14 @@ function UserChecking({ children }) {
       </div>
     );
   }
-  if (!user) {
+
+  if (!user && !isCheckoutPage) {
     return (
       <div className="h-screen w-full flex flex-col gap-3 justify-center items-center">
-        <h1 className="text-sm text-gray-600">You are not logged In!</h1>
+        <h1 className="text-sm text-gray-600">Vous n'êtes pas connecté !</h1>
         <Link href={"/login"}>
-          <button className="text-white bg-blue-500 px-4 py-2 text-sm rounded-xl">
-            Login
+          <button className="text-white bg-black px-6 py-3 text-sm rounded-lg hover:bg-gray-800 transition-colors">
+            Se connecter
           </button>
         </Link>
       </div>
