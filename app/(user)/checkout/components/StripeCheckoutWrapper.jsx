@@ -101,7 +101,10 @@ function AddressForm({ productList, onSubmit, loading }) {
         setAddress({ ...address, [key]: value });
     };
 
-    const subTotal = productList?.reduce((prev, curr) => prev + curr?.quantity * curr?.product?.salePrice, 0) || 0;
+    const subTotal = productList?.reduce((prev, curr) => {
+        const price = curr?.product?.salePrice && curr?.product?.salePrice > 0 ? curr?.product?.salePrice : curr?.product?.price;
+        return prev + (price * curr?.quantity);
+    }, 0) || 0;
     const shippingCost = 5.90;
     const totalPrice = subTotal + shippingCost;
 
@@ -273,18 +276,26 @@ function AddressForm({ productList, onSubmit, loading }) {
                 <aside className="lg:w-[400px] bg-gray-50 p-6 rounded-lg h-fit lg:sticky lg:top-24">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Récapitulatif</h2>
                     <div className="space-y-4">
-                        {productList?.map((item) => (
-                            <div key={item.id} className="flex gap-4">
-                                <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden border">
-                                    <img src={item.product.featureImageURL} alt={item.product.title} className="w-full h-full object-cover" />
-                                    <div className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{item.quantity}</div>
+                        {productList?.map((item) => {
+                            const price = item.product.salePrice && item.product.salePrice > 0 ? item.product.salePrice : item.product.price;
+                            return (
+                                <div key={item.id} className="flex gap-4">
+                                    <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden border">
+                                        <img src={item.product.featureImageURL} alt={item.product.title} className="w-full h-full object-cover" />
+                                        <div className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{item.quantity}</div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-sm font-medium truncate">{item.product.title}</h3>
+                                        <div className="flex flex-col">
+                                            <p className="text-sm text-gray-900 font-medium">{(price * item.quantity).toFixed(2)} €</p>
+                                            {item.product.salePrice > 0 && item.product.price > item.product.salePrice && (
+                                                <p className="text-xs text-gray-400 line-through">{(item.product.price * item.quantity).toFixed(2)} €</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-sm font-medium truncate">{item.product.title}</h3>
-                                    <p className="text-sm text-gray-500">{(item.product.salePrice * item.quantity).toFixed(2)} €</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
@@ -311,7 +322,10 @@ function PaymentForm({ productList, address, onBack }) {
     const elements = useElements();
     const [isLoading, setIsLoading] = useState(false);
 
-    const subTotal = productList?.reduce((prev, curr) => prev + curr?.quantity * curr?.product?.salePrice, 0) || 0;
+    const subTotal = productList?.reduce((prev, curr) => {
+        const price = curr?.product?.salePrice && curr?.product?.salePrice > 0 ? curr?.product?.salePrice : curr?.product?.price;
+        return prev + (price * curr?.quantity);
+    }, 0) || 0;
     const shippingCost = 5.90;
     const totalPrice = subTotal + shippingCost;
 
@@ -383,18 +397,26 @@ function PaymentForm({ productList, address, onBack }) {
                 <aside className="lg:w-[400px] bg-gray-50 p-6 rounded-lg h-fit lg:sticky lg:top-24">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Récapitulatif</h2>
                     <div className="space-y-4">
-                        {productList?.map((item) => (
-                            <div key={item.id} className="flex gap-4">
-                                <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden border">
-                                    <img src={item.product.featureImageURL} alt={item.product.title} className="w-full h-full object-cover" />
-                                    <div className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{item.quantity}</div>
+                        {productList?.map((item) => {
+                            const price = item.product.salePrice && item.product.salePrice > 0 ? item.product.salePrice : item.product.price;
+                            return (
+                                <div key={item.id} className="flex gap-4">
+                                    <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden border">
+                                        <img src={item.product.featureImageURL} alt={item.product.title} className="w-full h-full object-cover" />
+                                        <div className="absolute -top-2 -right-2 bg-gray-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{item.quantity}</div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-sm font-medium truncate">{item.product.title}</h3>
+                                        <div className="flex flex-col">
+                                            <p className="text-sm text-gray-900 font-medium">{(price * item.quantity).toFixed(2)} €</p>
+                                            {item.product.salePrice > 0 && item.product.price > item.product.salePrice && (
+                                                <p className="text-xs text-gray-400 line-through">{(item.product.price * item.quantity).toFixed(2)} €</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-sm font-medium truncate">{item.product.title}</h3>
-                                    <p className="text-sm text-gray-500">{(item.product.salePrice * item.quantity).toFixed(2)} €</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
