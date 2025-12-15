@@ -15,7 +15,8 @@ export async function POST(request) {
 
         // Calculate total amount
         const subTotal = productList.reduce((prev, curr) => {
-            return prev + (curr?.quantity * curr?.product?.salePrice);
+            const price = curr?.product?.salePrice && curr?.product?.salePrice > 0 ? curr?.product?.salePrice : curr?.product?.price;
+            return prev + (price * curr?.quantity);
         }, 0);
 
         const shippingCost = address?.shippingCost || 5.90;
@@ -27,21 +28,24 @@ export async function POST(request) {
         const orderNumber = `ADM-${timestamp}-${random}`;
 
         // Prepare line items for storage
-        const lineItems = productList.map((item) => ({
-            price_data: {
-                currency: "eur",
-                product_data: {
-                    name: item?.product?.title || "Produit",
-                    description: item?.product?.shortDescription || "",
-                    images: item?.product?.featureImageURL ? [item?.product?.featureImageURL] : [],
-                    metadata: {
-                        productId: item?.product?.id || item?.id,
+        const lineItems = productList.map((item) => {
+            const unitAmount = item?.product?.salePrice && item?.product?.salePrice > 0 ? item?.product?.salePrice : item?.product?.price;
+            return {
+                price_data: {
+                    currency: "eur",
+                    product_data: {
+                        name: item?.product?.title || "Produit",
+                        description: item?.product?.shortDescription || "",
+                        images: item?.product?.featureImageURL ? [item?.product?.featureImageURL] : [],
+                        metadata: {
+                            productId: item?.product?.id || item?.id,
+                        },
                     },
+                    unit_amount: Math.round((unitAmount || 0) * 100),
                 },
-                unit_amount: Math.round((item?.product?.salePrice || 0) * 100),
-            },
-            quantity: item?.quantity || 1,
-        }));
+                quantity: item?.quantity || 1,
+            };
+        });
 
         // Create a PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
@@ -95,6 +99,7 @@ export async function POST(request) {
 
             // Timestamps
             createdAt: Timestamp.now(),
+            timestampCreate: Timestamp.now(), // Required for Admin ListView ordering
             updatedAt: Timestamp.now(),
         });
 

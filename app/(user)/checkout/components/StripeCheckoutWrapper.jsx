@@ -118,7 +118,7 @@ function AddressForm({ productList, onSubmit, loading }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!address.email) return toast.error("Veuillez renseigner votre email");
-        if (!address.fullName || !address.addressLine1 || !address.city || !address.pincode) {
+        if (!address.fullName || !address.addressLine1 || !address.city || !address.pincode || !address.phone) {
             return toast.error("Veuillez remplir tous les champs obligatoires");
         }
         onSubmit({ ...address, shippingCost });
@@ -198,9 +198,10 @@ function AddressForm({ productList, onSubmit, loading }) {
                             </div>
                             <input
                                 type="tel"
-                                placeholder="Téléphone (optionnel)"
+                                placeholder="Téléphone"
                                 value={address.phone || ''}
                                 onChange={(e) => handleAddress("phone", e.target.value)}
+                                required
                                 className={inputClasses}
                             />
                         </div>
