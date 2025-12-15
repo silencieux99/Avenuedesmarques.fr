@@ -53,8 +53,15 @@ const getTotalOrdersCounts = async (dates) => {
 };
 
 export function useOrdersCounts() {
-  const { data, error, isLoading } = useSWR("ordrs_counts", (key) =>
-    getOrdersCounts({ date: null })
+  const { data, error, isLoading } = useSWR(
+    "ordrs_counts",
+    (key) => getOrdersCounts({ date: null }),
+    {
+      revalidateOnFocus: false, // Don't fetch on window focus
+      revalidateOnReconnect: false, // Don't fetch on reconnect
+      dedupingInterval: 60000, // Cache for 1 minute
+      shouldRetryOnError: false, // Don't retry immediately on error (saves 429 loops)
+    }
   );
   if (error) {
     console.log(error?.message);
@@ -66,7 +73,13 @@ export function useOrdersCountsByTotalDays({ dates }) {
   const { data, error, isLoading } = useSWR(
     ["orders_count", dates],
     ([key, dates]) =>
-      getTotalOrdersCounts(dates?.sort((a, b) => a?.getTime() - b?.getTime()))
+      getTotalOrdersCounts(dates?.sort((a, b) => a?.getTime() - b?.getTime())),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000 * 5, // Cache for 5 minutes since historical data doesn't change fast
+      shouldRetryOnError: false,
+    }
   );
   if (error) {
     console.log(error?.message);

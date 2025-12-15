@@ -140,6 +140,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                             value={address.email}
                             onChange={(e) => handleAddress("email", e.target.value)}
                             required
+                            aria-label="Adresse email"
                             className={inputClasses}
                         />
                     </div>
@@ -151,6 +152,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                             <select
                                 value={address.country}
                                 onChange={(e) => handleAddress("country", e.target.value)}
+                                aria-label="Pays de livraison"
                                 className={`${inputClasses} bg-white`}
                             >
                                 {schengenCountries.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -161,6 +163,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 value={address.fullName || ''}
                                 onChange={(e) => handleAddress("fullName", e.target.value)}
                                 required
+                                aria-label="Nom complet"
                                 className={inputClasses}
                             />
                             <input
@@ -169,6 +172,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 value={address.addressLine1 || ''}
                                 onChange={(e) => handleAddress("addressLine1", e.target.value)}
                                 required
+                                aria-label="Adresse postale"
                                 className={inputClasses}
                             />
                             <input
@@ -176,6 +180,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 placeholder="Appartement, suite, etc. (optionnel)"
                                 value={address.addressLine2 || ''}
                                 onChange={(e) => handleAddress("addressLine2", e.target.value)}
+                                aria-label="Complément d'adresse"
                                 className={inputClasses}
                             />
                             <div className="grid grid-cols-3 gap-3">
@@ -185,6 +190,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                     value={address.pincode || ''}
                                     onChange={(e) => handleAddress("pincode", e.target.value)}
                                     required
+                                    aria-label="Code postal"
                                     className="border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black"
                                 />
                                 <input
@@ -193,6 +199,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                     value={address.city || ''}
                                     onChange={(e) => handleAddress("city", e.target.value)}
                                     required
+                                    aria-label="Ville"
                                     className="col-span-2 border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black"
                                 />
                             </div>
@@ -202,6 +209,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 value={address.phone || ''}
                                 onChange={(e) => handleAddress("phone", e.target.value)}
                                 required
+                                aria-label="Numéro de téléphone"
                                 className={inputClasses}
                             />
                         </div>
@@ -238,6 +246,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 placeholder="Entrez votre code promo"
                                 value={address.promoCode || ''}
                                 onChange={(e) => handleAddress("promoCode", e.target.value.toUpperCase())}
+                                aria-label="Code promotionnel"
                                 className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-[16px] font-mono focus:outline-none focus:ring-2 focus:ring-black"
                             />
                             <button type="button" className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Appliquer</button>
@@ -252,6 +261,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                             value={address.customerNote || ''}
                             onChange={(e) => handleAddress("customerNote", e.target.value)}
                             rows={3}
+                            aria-label="Note de commande"
                             className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[16px] resize-none focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>

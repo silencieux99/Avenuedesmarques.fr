@@ -9,10 +9,43 @@ export async function generateMetadata({ params }) {
   const { productId } = params;
   const product = await getProduct({ id: productId });
 
+  if (!product) {
+    return {
+      title: "Produit non trouvé | Avenue des Marques",
+    };
+  }
+
+  const title = `${product?.title} - Pas Cher | Avenue des Marques`;
+  const description = product?.shortDescription || `Achetez ${product?.title} au meilleur prix sur Avenue des Marques. Livraison rapide et paiement sécurisé.`;
+  const url = `https://avenuedesmarques.fr/products/${productId}`;
+
   return {
-    title: `${product?.title} | Avenue des Marques`,
-    description: product?.shortDescription ?? "",
+    title: title,
+    description: description,
+    metadataBase: new URL('https://avenuedesmarques.fr'),
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
+      title: title,
+      description: description,
+      url: url,
+      siteName: 'Avenue des Marques',
+      images: [
+        {
+          url: product?.featureImageURL,
+          width: 800,
+          height: 600,
+          alt: product?.title,
+        },
+      ],
+      locale: 'fr_FR',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: description,
       images: [product?.featureImageURL],
     },
   };
@@ -26,8 +59,33 @@ export default async function Page({ params }) {
     return <div>Product not found</div>;
   }
 
+  // JSON-LD Structured Data for Google
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: product.featureImageURL,
+    description: product.shortDescription || product.description,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || 'Avenue des Marques',
+    },
+    offers: {
+      '@type': 'Offer',
+      url: `https://avenuedesmarques.fr/products/${productId}`,
+      priceCurrency: 'EUR',
+      price: product.salePrice > 0 ? product.salePrice : product.price,
+      availability: product.stock !== undefined && product.stock <= 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  };
+
   return (
     <main className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <AuthContextProvider>
         <ProductClientPage product={product} />
 
