@@ -4,35 +4,34 @@ import Slider from "react-slick";
 
 export default function Brands({ brands }) {
   var settings = {
-    dots: true,
-    infinite: false,
+    dots: false, // Désactiver la pagination
+    infinite: true,
     speed: 500,
     slidesToShow: 5,
-    slidesToScroll: 5,
-    initialSlide: 0,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    arrows: false,
     responsive: [
       {
         breakpoint: 1024,
         settings: {
           slidesToShow: 4,
-          slidesToScroll: 4,
-          infinite: true,
-          dots: true,
+          slidesToScroll: 1,
         },
       },
       {
         breakpoint: 600,
         settings: {
           slidesToShow: 3,
-          slidesToScroll: 3,
-          initialSlide: 3,
+          slidesToScroll: 1,
         },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 2,
-          slidesToScroll: 2,
+          slidesToScroll: 1,
         },
       },
     ],
