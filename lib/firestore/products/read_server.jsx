@@ -43,7 +43,6 @@ export const getProductsByCategory = async ({ categoryId }) => {
   const list = await getDocs(
     query(
       collection(db, "products"),
-      orderBy("timestampCreate", "desc"),
       where("categoryId", "==", categoryId)
     )
   );
