@@ -54,7 +54,7 @@ export default function Form() {
     setIsLoading(true);
     try {
       await createNewCategory({ data: data, image: image });
-      toast.success("Successfully Created");
+      toast.success("Catégorie créée avec succès");
       setData(null);
       setImage(null);
     } catch (error) {
@@ -67,7 +67,7 @@ export default function Form() {
     setIsLoading(true);
     try {
       await updateCategory({ data: data, image: image });
-      toast.success("Successfully Updated");
+      toast.success("Catégorie mise à jour avec succès");
       setData(null);
       setImage(null);
       router.push(`/admin/categories`);
@@ -79,7 +79,7 @@ export default function Form() {
 
   return (
     <div className="flex flex-col gap-3 bg-white rounded-xl p-5 w-full md:w-[400px]">
-      <h1 className="font-semibold">{id ? "Update" : "Create"} Category</h1>
+      <h1 className="font-semibold">{id ? "Modifier" : "Créer"} une catégorie</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -170,7 +170,7 @@ export default function Form() {
           </select>
         </div>
         <Button isLoading={isLoading} isDisabled={isLoading} type="submit">
-          {id ? "Update" : "Create"}
+          {id ? "Mettre à jour" : "Créer"}
         </Button>
       </form>
     </div>
