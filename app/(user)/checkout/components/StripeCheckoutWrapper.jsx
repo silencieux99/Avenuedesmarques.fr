@@ -37,6 +37,8 @@ export default function StripeCheckoutWrapper({ productList }) {
             setClientSecret(data.clientSecret);
             setAddress(addressData);
             setStep('payment');
+            // Scroll to top when moving to payment step
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
             console.error('Error creating payment intent:', err);
             toast.error(err.message || 'Erreur lors de la création du paiement');
@@ -214,7 +216,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                                         <Truck className="w-5 h-5 text-gray-700" />
                                         <div>
                                             <p className="font-medium">Livraison Standard</p>
-                                            <p className="text-sm text-gray-500">3-5 jours ouvrables</p>
+                                            <p className="text-sm text-gray-500">7 à 10 jours ouvrables</p>
                                         </div>
                                     </div>
                                 </div>

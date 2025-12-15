@@ -131,16 +131,23 @@ function ProductItem({ item }) {
             {product?.title}
           </h1>
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-bold text-gray-900">{product?.salePrice} €</span>
-            {product?.price > product?.salePrice && (
-              <span className="line-through text-xs text-gray-400">
-                {product?.price} €
-              </span>
-            )}
-            {product?.price > product?.salePrice && (
-              <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold uppercase">
-                Soldes
-              </span>
+            {/* Show salePrice if it exists and is greater than 0, otherwise show price */}
+            {product?.salePrice && product?.salePrice > 0 ? (
+              <>
+                <span className="font-bold text-gray-900">{product?.salePrice?.toFixed(2)} €</span>
+                {product?.price && product?.price > product?.salePrice && (
+                  <>
+                    <span className="line-through text-xs text-gray-400">
+                      {product?.price?.toFixed(2)} €
+                    </span>
+                    <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                      Soldes
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              <span className="font-bold text-gray-900">{product?.price?.toFixed(2) || '0.00'} €</span>
             )}
           </div>
         </div>
