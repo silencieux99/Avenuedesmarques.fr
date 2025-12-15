@@ -44,7 +44,7 @@ export default async function Home() {
       <Header />
       <div className="pt-8">
         <HeroModern heroSlides={heroSlides} />
-        <div className="flex flex-col gap-20 md:gap-32 pb-24 md:pb-32">
+        <div className="flex flex-col gap-20 md:gap-32 pb-24 md:pb-32 mt-20 md:mt-32">
 
           <Collections collections={collections} />
 
