@@ -1,7 +1,6 @@
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { NextUIProvider } from "@nextui-org/react";
-import { Toaster } from "react-hot-toast";
+import { Providers } from "./providers";
 import "slick-carousel/slick/slick.css";
 // import "slick-carousel/slick/slick-theme.css"; // Removing to fix font loading error with Turbopack. Custom styles should be used.
 
@@ -34,8 +33,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.variable} ${playfair.variable} antialiased bg-background text-foreground`}
       >
-        <Toaster />
-        <NextUIProvider>{children}</NextUIProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

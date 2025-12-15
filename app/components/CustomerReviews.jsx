@@ -1,3 +1,5 @@
+"use client";
+
 import { Rating } from "@mui/material";
 
 export default function CustomerReviews() {
@@ -36,7 +38,7 @@ export default function CustomerReviews() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {list?.map((item) => {
             return (
-              <div className="flex flex-col gap-2 p-4 rounded-lg justify-center items-center border">
+              <div key={item?.name} className="flex flex-col gap-2 p-4 rounded-lg justify-center items-center border">
                 <img
                   src={item?.imageLink}
                   className="h-32 w-32 rounded-full object-cover"
@@ -47,7 +49,7 @@ export default function CustomerReviews() {
                   size="small"
                   name="customer-rating"
                   defaultValue={item?.rating}
-                  precision={item?.rating}
+                  precision={0.5}
                   readOnly
                 />
                 <p className="text-sm text-gray-500 text-center">
