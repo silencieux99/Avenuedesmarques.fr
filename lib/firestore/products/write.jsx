@@ -83,3 +83,19 @@ export const deleteProduct = async ({ id }) => {
   }
   await deleteDoc(doc(db, `products/${id}`));
 };
+
+export const createProductFromAI = async ({ data, featureImageURL, imageListURLs }) => {
+  if (!data?.title) {
+    throw new Error("Title is required");
+  }
+
+  const newId = doc(collection(db, `ids`)).id;
+
+  await setDoc(doc(db, `products/${newId}`), {
+    ...data,
+    featureImageURL: featureImageURL || "",
+    imageList: imageListURLs || [],
+    id: newId,
+    timestampCreate: Timestamp.now(),
+  });
+};
