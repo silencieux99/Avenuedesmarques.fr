@@ -25,3 +25,10 @@ export const getCategoryBySlug = async ({ slug }) => {
     return null;
   }
 };
+
+export const getCategoriesBySlug = async ({ slug }) => {
+  const list = await getDocs(
+    query(collection(db, "categories"), where("slug", "==", slug))
+  );
+  return list.docs.map(d => d.data());
+};

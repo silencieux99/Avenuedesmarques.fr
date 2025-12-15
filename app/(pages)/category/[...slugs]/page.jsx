@@ -1,5 +1,5 @@
 import { ProductCard } from "@/app/components/Products";
-import { getCategoryBySlug, getCategories } from "@/lib/firestore/categories/read_server";
+import { getCategoryBySlug, getCategoriesBySlug, getCategories } from "@/lib/firestore/categories/read_server";
 import { getProductsByCategoryIds } from "@/lib/firestore/products/read_server";
 
 export async function generateMetadata({ params }) {
@@ -19,13 +19,13 @@ export default async function Page({ params }) {
     const { slugs } = params;
     const slug = slugs[slugs.length - 1]; // Get the last part of the path
 
-    // Fetch current category and ALL categories to build tree
-    const [category, allCategories] = await Promise.all([
-        getCategoryBySlug({ slug: slug }),
+    // Fetch potential matches and ALL categories to build tree
+    const [candidates, allCategories] = await Promise.all([
+        getCategoriesBySlug({ slug: slug }),
         getCategories()
     ]);
 
-    if (!category) {
+    if (!candidates || candidates.length === 0) {
         return (
             <main className="min-h-screen pt-28 pb-10 px-4 md:px-8 bg-background flex flex-col items-center justify-center">
                 <h1 className="text-2xl font-bold mb-4">Catégorie non trouvée</h1>
@@ -45,9 +45,35 @@ export default async function Page({ params }) {
         return descendants;
     };
 
-    const targetIds = [category.id, ...getDescendants(category.id)];
+    let targetCategories = candidates;
 
-    const products = await getProductsByCategoryIds({ categoryIds: targetIds });
+    // If path has context (e.g. /category/homme/t-shirt), try to filter candidates
+    if (slugs.length > 1) {
+        const parentSlug = slugs[slugs.length - 2];
+        const parentCategory = allCategories.find(c => c.slug === parentSlug);
+
+        if (parentCategory) {
+            const strictMatch = candidates.find(c => c.parentId === parentCategory.id);
+            if (strictMatch) {
+                targetCategories = [strictMatch];
+            }
+        }
+    }
+
+    // Collect all IDs (Target categories + their descendants)
+    let allTargetIds = [];
+    targetCategories.forEach(cat => {
+        allTargetIds.push(cat.id);
+        allTargetIds = [...allTargetIds, ...getDescendants(cat.id)];
+    });
+
+    // Deduplicate IDs
+    allTargetIds = [...new Set(allTargetIds)];
+
+    const products = await getProductsByCategoryIds({ categoryIds: allTargetIds });
+
+    // Use the name of the first matched category for display
+    const category = targetCategories[0];
 
     return (
         <main className="min-h-screen pt-28 pb-10 px-4 md:px-8 bg-background">
