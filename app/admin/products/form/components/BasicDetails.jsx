@@ -228,6 +228,28 @@ export default function BasicDetails({ data, handleData }) {
           <option value={"yes"}>Yes</option>
         </select>
       </div>
+
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-gray-500 text-xs"
+          htmlFor="product-show-in-hero"
+        >
+          Afficher dans le Hero <span className="text-red-500">*</span>{" "}
+        </label>
+        <select
+          id="product-show-in-hero"
+          name="product-show-in-hero"
+          value={data?.showInHero ? "yes" : "no"}
+          onChange={(e) => {
+            handleData("showInHero", e.target.value === "yes" ? true : false);
+          }}
+          className="border px-4 py-2 rounded-lg w-full outline-none"
+          required
+        >
+          <option value={"no"}>Non</option>
+          <option value={"yes"}>Oui</option>
+        </select>
+      </div>
     </section>
   );
 }

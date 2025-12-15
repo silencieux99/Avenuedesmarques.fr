@@ -25,6 +25,13 @@ export const getFeaturedProducts = async () => {
   return list.docs.map((snap) => snap.data());
 };
 
+export const getHeroProducts = async () => {
+  const list = await getDocs(
+    query(collection(db, "products"), where("showInHero", "==", true))
+  );
+  return list.docs.map((snap) => snap.data());
+};
+
 export const getProducts = async () => {
   const list = await getDocs(
     query(collection(db, "products"), orderBy("timestampCreate", "desc"))
