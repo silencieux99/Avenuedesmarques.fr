@@ -2,10 +2,13 @@
 
 import { useBrands } from "@/lib/firestore/brands/read";
 import { useCategories } from "@/lib/firestore/categories/read";
+import { useCollections } from "@/lib/firestore/collections/read";
 
 export default function BasicDetails({ data, handleData }) {
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
+  const { data: collections } = useCollections();
+
   return (
     <section className="flex-1 flex flex-col gap-3 bg-white rounded-xl p-4 border">
       <h1 className="font-semibold">Basic Details</h1>
@@ -22,6 +25,28 @@ export default function BasicDetails({ data, handleData }) {
           value={data?.title ?? ""}
           onChange={(e) => {
             handleData("title", e.target.value);
+            // Auto-generate slug if not set
+            if (!data?.slug) {
+              handleData("slug", e.target.value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, ""));
+            }
+          }}
+          className="border px-4 py-2 rounded-lg w-full outline-none"
+          required
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-gray-500 text-xs" htmlFor="product-slug">
+          Slug (URL) <span className="text-red-500">*</span>{" "}
+        </label>
+        <input
+          type="text"
+          placeholder="product-url-slug"
+          id="product-slug"
+          name="product-slug"
+          value={data?.slug ?? ""}
+          onChange={(e) => {
+            handleData("slug", e.target.value);
           }}
           className="border px-4 py-2 rounded-lg w-full outline-none"
           required
@@ -95,6 +120,31 @@ export default function BasicDetails({ data, handleData }) {
             return (
               <option value={item?.id} key={item?.id}>
                 {item?.name}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-gray-500 text-xs" htmlFor="product-collection">
+          Collection (Optional)
+        </label>
+        <select
+          type="text"
+          id="product-collection"
+          name="product-collection"
+          value={data?.collectionId ?? ""}
+          onChange={(e) => {
+            handleData("collectionId", e.target.value);
+          }}
+          className="border px-4 py-2 rounded-lg w-full outline-none"
+        >
+          <option value="">Select Collection</option>
+          {collections?.map((item) => {
+            return (
+              <option value={item?.id} key={item?.id}>
+                {item?.title}
               </option>
             );
           })}

@@ -22,7 +22,6 @@ export default function Page() {
   }
 
   return (
-  return (
     <main className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-background">
       <div className="max-w-[1000px] mx-auto space-y-10">
         <div className="text-center space-y-2">
@@ -84,8 +83,8 @@ export default function Page() {
 
                     <div className="flex items-center gap-3">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${item?.status === 'paid' ? 'bg-green-100 text-green-700' :
-                          item?.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                            'bg-gray-100 text-gray-700'
+                        item?.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                          'bg-gray-100 text-gray-700'
                         }`}>
                         {item?.status ?? "En attente"}
                       </span>

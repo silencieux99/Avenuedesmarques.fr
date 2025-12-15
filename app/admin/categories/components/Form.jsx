@@ -1,5 +1,6 @@
 "use client";
 
+import { useCategories } from "@/lib/firestore/categories/read";
 import { getCategory } from "@/lib/firestore/categories/read_server";
 import {
   createNewCategory,
@@ -14,6 +15,7 @@ export default function Form() {
   const [data, setData] = useState(null);
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { data: categories } = useCategories();
 
   const router = useRouter();
 
@@ -127,7 +129,7 @@ export default function Form() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="category-name" className="text-gray-500 text-sm">
+          <label htmlFor="category-slug" className="text-gray-500 text-sm">
             Slug <span className="text-red-500">*</span>{" "}
           </label>
           <input
@@ -141,6 +143,31 @@ export default function Form() {
             placeholder="Enter Slug"
             className="border px-4 py-2 rounded-lg w-full focus:outline-none"
           />
+        </div>
+
+        {/* Parent Category Selection */}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="category-parent" className="text-gray-500 text-sm">
+            Parent Category (Optional)
+          </label>
+          <select
+            id="category-parent"
+            name="category-parent"
+            value={data?.parentId ?? ""}
+            onChange={(e) => handleData("parentId", e.target.value)}
+            className="border px-4 py-2 rounded-lg w-full focus:outline-none"
+          >
+            <option value="">None (Top Level)</option>
+            {categories?.map((cat) => {
+              // Prevent selecting itself as parent or creating circular dependency
+              if (id && cat.id === id) return null;
+              return (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              );
+            })}
+          </select>
         </div>
         <Button isLoading={isLoading} isDisabled={isLoading} type="submit">
           {id ? "Update" : "Create"}

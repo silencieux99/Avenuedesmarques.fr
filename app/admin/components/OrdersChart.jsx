@@ -27,10 +27,10 @@ export default function OrdersChart({ items }) {
     labels: items?.map((item) => item?.date),
     datasets: [
       {
-        label: "Orders",
+        label: "Commandes",
         data: items?.map((item) => item?.data?.totalOrders),
-        backgroundColor: "#879fff20",
-        borderColor: "#879fff80",
+        backgroundColor: "#f5a52420",
+        borderColor: "#f5a524",
         borderWidth: 0.5,
         barThickness: 30,
       },
@@ -46,7 +46,7 @@ export default function OrdersChart({ items }) {
       },
       title: {
         display: true,
-        text: "Total Order Bar Chart",
+        text: "Graphique des commandes (7 derniers jours)",
       },
     },
     scales: {

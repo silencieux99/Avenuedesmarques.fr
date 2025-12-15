@@ -8,11 +8,36 @@ import HeaderClientButtons from "./HeaderClientButtons";
 import AdminButton from "./AdminButton";
 import { Search, Menu, X, ChevronRight, User } from "lucide-react";
 
+import { useCategories } from "@/lib/firestore/categories/read";
+
+// Helper to build category tree
+function buildCategoryTree(categories) {
+  const categoryMap = {};
+  const roots = [];
+
+  // 1. Initialize map
+  categories.forEach((cat) => {
+    categoryMap[cat.id] = { ...cat, submenu: [] };
+  });
+
+  // 2. Build tree
+  categories.forEach((cat) => {
+    if (cat.parentId && categoryMap[cat.parentId]) {
+      categoryMap[cat.parentId].submenu.push(categoryMap[cat.id]);
+    } else {
+      roots.push(categoryMap[cat.id]);
+    }
+  });
+
+  return roots;
+}
+
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [expandedMenu, setExpandedMenu] = useState(null);
+  const [expandedMenu, setExpandedMenu] = useState({}); // Changed to object for multi-level expansion
+  const { data: categories } = useCategories();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,41 +47,46 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const menuList = [
+  const dynamicCategories = categories ? buildCategoryTree(categories) : [];
+
+  const staticMenu = [
     {
       name: "Nouveautés",
       link: "/nouveautes",
-      featured: true
+      featured: true,
     },
-    {
-      name: "Femme",
-      link: "/category/femme",
-      submenu: [
-        { name: "Vêtements", link: "/category/femme/vetements" },
-        { name: "Sacs", link: "/category/femme/sacs" },
-        { name: "Chaussures", link: "/category/femme/chaussures" },
-        { name: "Accessoires", link: "/category/femme/accessoires" },
-      ]
-    },
-    {
-      name: "Homme",
-      link: "/category/homme",
-      submenu: [
-        { name: "Vêtements", link: "/category/homme/vetements" },
-        { name: "Sacs", link: "/category/homme/sacs" },
-        { name: "Chaussures", link: "/category/homme/chaussures" },
-        { name: "Accessoires", link: "/category/homme/accessoires" },
-      ]
-    },
+    ...dynamicCategories.map(cat => ({
+      name: cat.name,
+      link: `/category/${cat.slug}`, // Use slug for link
+      submenu: cat.submenu.length > 0 ? cat.submenu.map(sub => ({
+        name: sub.name,
+        link: `/category/${cat.slug}/${sub.slug}`,
+        submenu: sub.submenu.length > 0 ? sub.submenu.map(subSub => ({
+          name: subSub.name,
+          link: `/category/${cat.slug}/${sub.slug}/${subSub.slug}`
+        })) : null
+      })) : null
+    })),
     {
       name: "Collections",
-      link: "/collections"
+      link: "/collections",
+      featured: false,
     },
     {
       name: "Marques",
-      link: "/brands"
+      link: "/brands",
+      featured: false,
     },
   ];
+
+  const menuList = staticMenu;
+
+  const toggleExpand = (name) => {
+    setExpandedMenu(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  }
 
   return (
     <>
@@ -70,8 +100,8 @@ export default function Header() {
       {/* Main Header */}
       <nav
         className={`fixed top-8 inset-x-0 z-50 transition-all duration-500 ${isScrolled
-            ? 'bg-white shadow-lg'
-            : 'bg-white/95 backdrop-blur-xl'
+          ? 'bg-white shadow-lg'
+          : 'bg-white/95 backdrop-blur-xl'
           }`}
       >
         <div className="max-w-[1600px] mx-auto px-4 md:px-6">
@@ -147,45 +177,83 @@ export default function Header() {
 
               {/* Navigation Items */}
               <div className="space-y-1">
-                {menuList.map((item) => (
-                  <div key={item.link}>
+                {menuList.map((item, index) => (
+                  <div key={index}>
                     {item.submenu ? (
                       <>
                         <button
-                          onClick={() => setExpandedMenu(expandedMenu === item.name ? null : item.name)}
+                          onClick={() => toggleExpand(item.name)}
                           className={`w-full px-4 py-3 rounded-lg transition-all flex items-center justify-between ${item.featured
-                              ? 'bg-accent text-white font-semibold'
-                              : 'hover:bg-gray-50'
+                              ? "bg-accent text-white font-semibold"
+                              : "hover:bg-gray-50"
                             }`}
                         >
                           <span>{item.name}</span>
                           <ChevronRight
-                            className={`w-4 h-4 transition-transform ${expandedMenu === item.name ? 'rotate-90' : ''
+                            className={`w-4 h-4 transition-transform ${expandedMenu[item.name] ? "rotate-90" : ""
                               }`}
                           />
                         </button>
-                        {expandedMenu === item.name && (
-                          <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                            {item.submenu.map((subItem) => (
-                              <Link
-                                key={subItem.link}
-                                href={subItem.link}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                              >
-                                <div className="px-4 py-2.5 text-sm text-gray-600 hover:text-accent hover:bg-gray-50 rounded-lg transition-all">
-                                  {subItem.name}
-                                </div>
-                              </Link>
+                        {expandedMenu[item.name] && (
+                          <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200 border-l border-gray-100 pl-2">
+                            {item.submenu.map((subItem, subIndex) => (
+                              <div key={subIndex}>
+                                {subItem.submenu ? (
+                                  <>
+                                    <button
+                                      onClick={() => toggleExpand(subItem.name)}
+                                      className="w-full px-4 py-2.5 text-sm rounded-lg transition-all flex items-center justify-between text-gray-700 hover:bg-gray-50"
+                                    >
+                                      <span>{subItem.name}</span>
+                                      <ChevronRight
+                                        className={`w-3 h-3 transition-transform ${expandedMenu[subItem.name]
+                                            ? "rotate-90"
+                                            : ""
+                                          }`}
+                                      />
+                                    </button>
+                                    {expandedMenu[subItem.name] && (
+                                      <div className="ml-4 mt-1 space-y-1 border-l border-gray-100 pl-2">
+                                        {subItem.submenu.map((subSubItem, subSubIndex) => (
+                                          <Link
+                                            key={subSubIndex}
+                                            href={subSubItem.link}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                          >
+                                            <div className="px-4 py-2 text-xs text-gray-500 hover:text-accent hover:bg-gray-50 rounded-lg transition-all">
+                                              {subSubItem.name}
+                                            </div>
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <Link
+                                    href={subItem.link}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                  >
+                                    <div className="px-4 py-2.5 text-sm text-gray-600 hover:text-accent hover:bg-gray-50 rounded-lg transition-all">
+                                      {subItem.name}
+                                    </div>
+                                  </Link>
+                                )}
+                              </div>
                             ))}
                           </div>
                         )}
                       </>
                     ) : (
-                      <Link href={item.link} onClick={() => setIsMobileMenuOpen(false)}>
-                        <div className={`px-4 py-3 rounded-lg transition-all ${item.featured
-                            ? 'bg-accent text-white font-semibold'
-                            : 'hover:bg-gray-50'
-                          }`}>
+                      <Link
+                        href={item.link}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <div
+                          className={`px-4 py-3 rounded-lg transition-all ${item.featured
+                              ? "bg-accent text-white font-semibold"
+                              : "hover:bg-gray-50"
+                            }`}
+                        >
                           {item.name}
                         </div>
                       </Link>

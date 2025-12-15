@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BasicDetails from "./components/BasicDetails";
 import Images from "./components/Images";
 import Description from "./components/Description";
+import SeoDetails from "./components/SeoDetails";
 import { Button } from "@nextui-org/react";
 import toast from "react-hot-toast";
 import {
@@ -125,6 +126,7 @@ export default function Page() {
             setImageList={setImageList}
           />
           <Description data={data} handleData={handleData} />
+          <SeoDetails data={data} handleData={handleData} />
         </div>
       </div>
     </form>

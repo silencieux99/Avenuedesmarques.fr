@@ -8,81 +8,84 @@ import { Button, CircularProgress } from "@nextui-org/react";
 import { Minus, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+export default function Page() {
+  const { user } = useAuth();
+  const { data } = useUser({ uid: user?.uid });
 
-return (
-  <main className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-background">
-    <div className="max-w-[1000px] mx-auto space-y-10">
-      <div className="text-center space-y-2">
-        <h1 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 uppercase tracking-widest">
-          Mon Panier
-        </h1>
-        <p className="text-gray-500 text-sm uppercase tracking-wide">
-          {data?.carts?.length > 0 ? `${data.carts.length} articles` : 'Votre panier est vide'}
-        </p>
-      </div>
-
-      {(!data?.carts || data?.carts?.length === 0) ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 bg-white rounded-xl shadow-sm border border-gray-100 p-10">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-lg font-medium text-gray-900">Votre panier est vide</h2>
-            <p className="text-gray-500">
-              Il semble que vous n'ayez pas encore ajouté de produits.
-            </p>
-          </div>
-          <a href="/" className="px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors">
-            Continuer mes achats
-          </a>
+  return (
+    <main className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-background">
+      <div className="max-w-[1000px] mx-auto space-y-10">
+        <div className="text-center space-y-2">
+          <h1 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 uppercase tracking-widest">
+            Mon Panier
+          </h1>
+          <p className="text-gray-500 text-sm uppercase tracking-wide">
+            {data?.carts?.length > 0 ? `${data.carts.length} articles` : 'Votre panier est vide'}
+          </p>
         </div>
-      ) : (
-        <div className="flex flex-col lg:flex-row gap-10">
-          {/* Cart Items */}
-          <div className="flex-1 space-y-6">
-            {data?.carts?.map((item, key) => {
-              return <ProductItem item={item} key={item?.id} />;
-            })}
+
+        {(!data?.carts || data?.carts?.length === 0) ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 bg-white rounded-xl shadow-sm border border-gray-100 p-10">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-lg font-medium text-gray-900">Votre panier est vide</h2>
+              <p className="text-gray-500">
+                Il semble que vous n'ayez pas encore ajouté de produits.
+              </p>
+            </div>
+            <a href="/" className="px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors">
+              Continuer mes achats
+            </a>
           </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-10">
+            {/* Cart Items */}
+            <div className="flex-1 space-y-6">
+              {data?.carts?.map((item, key) => {
+                return <ProductItem item={item} key={item?.id} />;
+              })}
+            </div>
 
-          {/* Order Summary */}
-          <div className="lg:w-[350px] space-y-6 h-fit sticky top-32">
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
-              <h3 className="font-serif text-lg font-bold uppercase tracking-wider border-b border-gray-100 pb-4">Résumé</h3>
+            {/* Order Summary */}
+            <div className="lg:w-[350px] space-y-6 h-fit sticky top-32">
+              <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
+                <h3 className="font-serif text-lg font-bold uppercase tracking-wider border-b border-gray-100 pb-4">Résumé</h3>
 
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-gray-600">
-                  <span>Sous-total</span>
-                  <span>Calculé à l'étape suivante</span>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Sous-total</span>
+                    <span>Calculé à l'étape suivante</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Livraison</span>
+                    <span className="text-green-600 font-medium">Gratuite</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Livraison</span>
-                  <span className="text-green-600 font-medium">Gratuite</span>
-                </div>
-              </div>
 
-              <Link href={`/checkout?type=cart`} className="block">
-                <button className="w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-lg">
-                  Passer la commande
-                </button>
-              </Link>
+                <Link href={`/checkout?type=cart`} className="block">
+                  <button className="w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-all rounded-lg">
+                    Passer la commande
+                  </button>
+                </Link>
 
-              <div className="space-y-2 text-xs text-gray-400 text-center">
-                <p>Paiement 100% sécurisé</p>
-                <div className="flex justify-center gap-2 grayscale opacity-70">
-                  {/* Add payment icons here if available, or just text */}
-                  <span>Visa</span> • <span>Mastercard</span> • <span>Paypal</span>
+                <div className="space-y-2 text-xs text-gray-400 text-center">
+                  <p>Paiement 100% sécurisé</p>
+                  <div className="flex justify-center gap-2 grayscale opacity-70">
+                    {/* Add payment icons here if available, or just text */}
+                    <span>Visa</span> • <span>Mastercard</span> • <span>Paypal</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  </main>
-);
+        )}
+      </div>
+    </main>
+  );
 }
 
 function ProductItem({ item }) {

@@ -1,61 +1,63 @@
 "use client";
 
 import { useUsers } from "@/lib/firestore/user/read";
-import { Avatar, Button, CircularProgress } from "@nextui-org/react";
+import {
+  Avatar,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  User,
+} from "@nextui-org/react";
 
 export default function ListView() {
   const { data: users, error, isLoading } = useUsers();
 
   if (isLoading) {
     return (
-      <div>
+      <div className="flex justify-center w-full">
         <CircularProgress />
       </div>
     );
   }
   if (error) {
-    return <div>{error}</div>;
+    return <div className="text-red-500">{error}</div>;
   }
-  return (
-    <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl">
-      <table className="border-separate border-spacing-y-3">
-        <thead>
-          <tr>
-            <th className="font-semibold border-y bg-white px-3 py-2 border-l rounded-l-lg">
-              SN
-            </th>
-            <th className="font-semibold border-y bg-white px-3 py-2">Photo</th>
-            <th className="font-semibold border-y bg-white px-3 py-2 text-left">
-              Name
-            </th>
-            <th className="font-semibold border-y bg-white px-3 py-2 text-left">
-              Email
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {users?.map((item, index) => {
-            return <Row index={index} item={item} key={item?.id} />;
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
-function Row({ item, index }) {
   return (
-    <tr>
-      <td className="border-y bg-white px-3 py-2 border-l rounded-l-lg text-center">
-        {index + 1}
-      </td>
-      <td className="border-y bg-white px-3 py-2 text-center">
-        <div className="flex justify-center">
-          <Avatar src={item?.photoURL} />
-        </div>
-      </td>
-      <td className="border-y bg-white px-3 py-2">{item?.displayName}</td>
-      <td className="border-y bg-white px-3 py-2">{item?.email}</td>
-    </tr>
+    <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl w-full">
+      <Table aria-label="Tableau des clients">
+        <TableHeader>
+          <TableColumn>UTILISATEUR</TableColumn>
+          <TableColumn>EMAIL</TableColumn>
+          <TableColumn>RÔLE</TableColumn>
+          <TableColumn>DATE D'INSCRIPTION</TableColumn>
+        </TableHeader>
+        <TableBody emptyContent={"Aucun client trouvé."}>
+          {users?.map((item) => (
+            <TableRow key={item?.id}>
+              <TableCell>
+                <User
+                  avatarProps={{ radius: "lg", src: item?.photoURL }}
+                  description={item?.email}
+                  name={item?.displayName || "Nom inconnu"}
+                >
+                  {item?.email}
+                </User>
+              </TableCell>
+              <TableCell>{item?.email}</TableCell>
+              <TableCell className="capitalize">{item?.role || "user"}</TableCell>
+              <TableCell>
+                {/* Assuming timestamps are available, otherwise simpler fallback */}
+                {item?.timestampCreate?.toDate().toLocaleDateString('fr-FR') || "N/A"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

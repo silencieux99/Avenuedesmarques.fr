@@ -31,14 +31,14 @@ export default function ChangeOrderStatus({ order }) {
       id="change-order-status"
       className="px-4 py-2 border rounded-lg bg-white"
     >
-      <option value="">Update Status</option>
-      <option value="pending">Pending</option>
-      <option value="packed">Packed</option>
-      <option value="picked up">Picked Up</option>
-      <option value="in transit">In Transit</option>
-      <option value="out for delivery">Out For Delivery</option>
-      <option value="delivered">Delivered</option>
-      <option value="cancelled">Cancelled</option>
+      <option value="">Modifier le statut</option>
+      <option value="pending">En attente (Pending)</option>
+      <option value="confirmed">Confirmée</option>
+      <option value="processing">En préparation</option>
+      <option value="shipped">Expédiée</option>
+      <option value="out_for_delivery">En cours de livraison</option>
+      <option value="delivered">Livrée</option>
+      <option value="cancelled">Annulée</option>
     </select>
   );
 }

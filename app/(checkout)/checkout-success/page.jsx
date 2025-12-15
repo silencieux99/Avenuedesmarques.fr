@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
 import { admin, adminDB } from "@/lib/firebase_admin";

@@ -20,7 +20,7 @@ import toast from "react-hot-toast";
 
 export default function Sidebar() {
   const menuList = [
-    { name: "Dashboard", link: "/admin", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { name: "Tableau de bord", link: "/admin", icon: <LayoutDashboard className="h-4 w-4" /> },
     { name: "Produits", link: "/admin/products", icon: <PackageOpen className="h-4 w-4" /> },
     { name: "Catégories", link: "/admin/categories", icon: <Layers2 className="h-4 w-4" /> },
     { name: "Marques", link: "/admin/brands", icon: <Cat className="h-4 w-4" /> },
