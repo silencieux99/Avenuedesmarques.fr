@@ -61,12 +61,16 @@ export const updateProduct = async ({ data, featureImage, imageList }) => {
     featureImageURL = await uploadImage(featureImage);
   }
 
-  let imageURLList = imageList?.length === 0 ? data?.imageList : [];
+  // Initialize with existing images
+  let imageURLList = [...(data?.imageList ?? [])];
 
-  for (let i = 0; i < imageList?.length; i++) {
-    const image = imageList[i];
-    const url = await uploadImage(image);
-    if (url) imageURLList.push(url);
+  // Append new uploaded images
+  if (imageList?.length > 0) {
+    for (let i = 0; i < imageList.length; i++) {
+      const image = imageList[i];
+      const url = await uploadImage(image);
+      if (url) imageURLList.push(url);
+    }
   }
 
   await setDoc(doc(db, `products/${data?.id}`), {

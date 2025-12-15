@@ -124,6 +124,7 @@ export default function Page() {
             setFeatureImage={setFeatureImage}
             imageList={imageList}
             setImageList={setImageList}
+            handleData={handleData}
           />
           <Description data={data} handleData={handleData} />
           <SeoDetails data={data} handleData={handleData} />

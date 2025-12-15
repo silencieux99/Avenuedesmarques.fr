@@ -1,0 +1,37 @@
+[dotenv@17.2.3] injecting env (11) from .env.local -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+Fetching categories...
+Total categories found: 23
+
+🔎 DIAGNOSIS: Found "Vêtement" category: "Vêtements"
+   - ID: SahljlzwnR3zwMbcuGOl
+   - Parent: None (ROOT)
+
+--- Current Category Structure ---
+-  Parfums (ID: 2fXLN5hRk9icRQ85Cqdc, Slug: -parfums-)
+- Manteaux — Vestes (ID: A4QOu7vblhKWJpgh2XYs, Slug: manteaux-vestes)
+- Hermes (ID: ANGdgi6VOSKD54HYBRJm, Slug: hermees)
+- Accessoires (ID: C7sNv4fUfvq6MAmLaUKm, Slug: accessoires)
+  - Écharpes (ID: GutypOEFjEX9JjPvS1e1, Slug: charpes)
+- Ensembles (ID: CYlbI86iGz8l3hGszhZ1, Slug: ensembles)
+- Céline (ID: Ea0y1IkSa5XcNVOWutbf, Slug: cline)
+- Hauts (ID: GkZyCaf5I1pO2uRzIyjt, Slug: hauts)
+- Jacquemus (ID: NTsBK9d7j91r3M9oqinz, Slug: jacquemus)
+- Sacs (ID: OOhesaVSSyNgXiYQMY5p, Slug: luxe)
+- Vêtements (ID: SahljlzwnR3zwMbcuGOl, Slug: vtements)
+  - Louis Vuitton (ID: 1hSrellIe1uvDX7evwwG, Slug: sacs-mains)
+- Pull (ID: aMhIBLLtnwCjwj0eKmA3, Slug: pull)
+- Dior (ID: alN2e3TBmj5c6Lgf8jJJ, Slug: dior)
+- Miu Miu (ID: axGA2vJutoaMSBq9zQqz, Slug: miu-miu)
+- Gucci (ID: ee7tIEDd80unGRDmsH5k, Slug: gucci)
+- Indéterminé (ID: gyef1d5xj1n6iiicOzk2, Slug: indtermin)
+- Yves Saint Laurent (ID: jEM0rbNg2b6WaAVWHSfx, Slug: yves-saint-laurent)
+- Maison (ID: o2em7USq0RUQPNt8edJg, Slug: maison)
+- Prada (ID: rBD2KkslvV5dYQPDcncN, Slug: prada)
+- Louis Vuitton (ID: t3TkuPF6uBHAqRECJTCx, Slug: louis-vuitton)
+- Robes (ID: v5tr9TYq0dQkxI3jqC5P, Slug: robes)
+- Chemises (ID: yOo9GbtBg70CWtJvaphK, Slug: chemises)
+
+--- Orphan Check ---
+
+--- Slug Uniqueness Check ---
+✅ All slugs are unique.

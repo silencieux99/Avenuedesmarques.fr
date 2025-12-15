@@ -4,91 +4,104 @@ export default function Images({
   featureImage,
   imageList,
   setImageList,
+  handleData,
 }) {
+
+  const handleDeleteExisting = (indexToRemove) => {
+    if (!handleData || !data?.imageList) return;
+    const updatedList = [...data.imageList];
+    updatedList.splice(indexToRemove, 1);
+    handleData('imageList', updatedList);
+  };
+
   return (
     <section className="flex flex-col gap-3 bg-white border p-4 rounded-xl">
       <h1 className="font-semibold">Images</h1>
+
+      {/* Feature Image */}
       <div className="flex flex-col gap-1">
-        {data?.featureImageURL && !featureImage && (
-          <div className="flex justify-center">
-            <img
-              className="h-20 object-cover rounded-lg"
-              src={data?.featureImageURL}
-              alt=""
-            />
+        <label className="text-gray-500 text-xs">Image Principale (Feature) <span className="text-red-500">*</span></label>
+
+        {featureImage ? (
+          <div className="relative w-fit group">
+            <img className="h-32 object-cover rounded-lg border" src={URL.createObjectURL(featureImage)} alt="" />
+            <button
+              type="button"
+              onClick={() => setFeatureImage(null)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-10"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
           </div>
-        )}
-        {featureImage && (
-          <div className="flex justify-center">
-            <img
-              className="h-20 object-cover rounded-lg"
-              src={URL.createObjectURL(featureImage)}
-              alt=""
-            />
+        ) : data?.featureImageURL ? (
+          <div className="relative w-fit group">
+            <img className="h-32 object-cover rounded-lg border" src={data?.featureImageURL} alt="" />
+            {/* NOTE: We can't strictly 'delete' feature image URL without uploading a new one or setting it to empty, but user can replace it. */}
           </div>
-        )}
-        <label
-          className="text-gray-500 text-xs"
-          htmlFor="product-feature-image"
-        >
-          Feature Image <span className="text-red-500">*</span>{" "}
-        </label>
+        ) : null}
+
         <input
           type="file"
+          accept="image/*"
           id="product-feature-image"
-          name="product-feature-image"
           onChange={(e) => {
-            if (e.target.files.length > 0) {
-              setFeatureImage(e.target.files[0]);
-            }
+            if (e.target.files.length > 0) setFeatureImage(e.target.files[0]);
           }}
-          className="border px-4 py-2 rounded-lg w-full outline-none"
+          className="border px-4 py-2 rounded-lg w-full outline-none text-sm mt-2"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        {imageList?.length === 0 && data?.imageList?.length != 0 && (
-          <div className="flex flex-wrap gap-3">
-            {data?.imageList?.map((item) => {
-              return (
-                <img
-                  className="w-20 object-cover rounded-lg"
-                  src={item}
-                  alt=""
-                />
-              );
-            })}
-          </div>
-        )}
-        {imageList?.length > 0 && (
-          <div className="flex flex-wrap gap-3">
-            {imageList?.map((item) => {
-              return (
-                <img
-                  className="w-20 object-cover rounded-lg"
-                  src={URL.createObjectURL(item)}
-                  alt=""
-                />
-              );
-            })}
-          </div>
-        )}
-        <label className="text-gray-500 text-xs" htmlFor="product-images">
-          Images <span className="text-red-500">*</span>{" "}
-        </label>
+
+      {/* Gallery Images */}
+      <div className="flex flex-col gap-1 mt-4">
+        <label className="text-gray-500 text-xs">Galerie d'images</label>
+
+        <div className="flex flex-wrap gap-3 mb-2">
+          {/* Existing Images */}
+          {data?.imageList?.map((item, index) => (
+            <div key={`existing-${index}`} className="relative group">
+              <img className="w-24 h-24 object-cover rounded-lg border" src={item} alt="" />
+              <button
+                type="button"
+                onClick={() => handleDeleteExisting(index)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                title="Supprimer cette image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+          ))}
+
+          {/* New Pending Images */}
+          {imageList?.map((item, index) => (
+            <div key={`new-${index}`} className="relative group">
+              <img className="w-24 h-24 object-cover rounded-lg border opacity-80" src={URL.createObjectURL(item)} alt="" />
+              <button
+                type="button"
+                onClick={() => {
+                  const newList = [...imageList];
+                  newList.splice(index, 1);
+                  setImageList(newList);
+                }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                title="Annuler cet ajout"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+
         <input
           type="file"
-          id="product-images"
-          name="product-images"
           multiple
+          accept="image/*"
           onChange={(e) => {
-            const newFiles = [];
-            for (let i = 0; i < e.target.files.length; i++) {
-              newFiles.push(e.target.files[i]);
-            }
-            setImageList(newFiles);
+            const newFiles = Array.from(e.target.files);
+            setImageList(prev => [...prev, ...newFiles]);
           }}
-          className="border px-4 py-2 rounded-lg w-full outline-none"
+          className="border px-4 py-2 rounded-lg w-full outline-none text-sm"
         />
+        <p className="text-xs text-gray-400">Ajoutez des images ici. Elles s'ajouteront à la liste existante.</p>
       </div>
     </section>
   );
