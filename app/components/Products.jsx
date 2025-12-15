@@ -68,13 +68,8 @@ export function ProductCard({ product }) {
         </Link>
         <div className="flex items-center gap-2 text-sm font-light">
           <span className="text-primary">
-            {product?.salePrice} €
+            {product?.price?.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </span>
-          {product?.price > product?.salePrice && (
-            <span className="line-through text-gray-400 text-xs">
-              {product?.price} €
-            </span>
-          )}
         </div>
       </div>
     </div>

@@ -188,24 +188,6 @@ export default function BasicDetails({ data, handleData }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-gray-500 text-xs" htmlFor="product-sale-price">
-          Sale Price <span className="text-red-500">*</span>{" "}
-        </label>
-        <input
-          type="number"
-          placeholder="Enter Sale Price"
-          id="product-sale-price"
-          name="product-sale-price"
-          value={data?.salePrice ?? ""}
-          onChange={(e) => {
-            handleData("salePrice", e.target.valueAsNumber);
-          }}
-          className="border px-4 py-2 rounded-lg w-full outline-none"
-          required
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
         <label
           className="text-gray-500 text-xs"
           htmlFor="product-is-featured-product"

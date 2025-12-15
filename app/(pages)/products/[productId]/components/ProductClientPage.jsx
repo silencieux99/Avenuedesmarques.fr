@@ -33,8 +33,7 @@ export default function ProductClientPage({ product }) {
     // We can add variant logic later if needed. For now assuming simple product.
 
     const isSoldOut = (product?.stock ?? 0) <= 0;
-    const currentPrice = product?.salePrice || product?.price;
-    const originalPrice = product?.salePrice && product?.salePrice < product?.price ? product?.price : null;
+    const currentPrice = product?.price;
 
     const isInWishlist = userData?.favorites?.includes(product?.id);
     const isAddedToCart = userData?.carts?.find((item) => item?.id === product?.id);
@@ -161,11 +160,6 @@ export default function ProductClientPage({ product }) {
                             <span className="text-2xl font-medium text-neutral-900">
                                 {currentPrice?.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                             </span>
-                            {originalPrice && (
-                                <span className="text-lg text-neutral-400 line-through decoration-1">
-                                    {originalPrice.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                                </span>
-                            )}
                         </div>
 
                         <StockUrgency stock={product.stock ?? 0} />
