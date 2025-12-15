@@ -22,7 +22,7 @@ export default function AdminLayout({ children }) {
   };
 
   useEffect(() => {
-    toggleSidebar();
+    setIsOpen(false); // Close sidebar on navigation
   }, [pathname]);
 
   useEffect(() => {
