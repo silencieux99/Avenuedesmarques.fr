@@ -1,6 +1,6 @@
 import { ProductCard } from "@/app/components/Products";
-import { getCategoryBySlug } from "@/lib/firestore/categories/read_server";
-import { getProductsByCategory } from "@/lib/firestore/products/read_server";
+import { getCategoryBySlug, getCategories } from "@/lib/firestore/categories/read_server";
+import { getProductsByCategoryIds } from "@/lib/firestore/products/read_server";
 
 export async function generateMetadata({ params }) {
     const { slugs } = params;
@@ -18,7 +18,12 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
     const { slugs } = params;
     const slug = slugs[slugs.length - 1]; // Get the last part of the path
-    const category = await getCategoryBySlug({ slug: slug });
+
+    // Fetch current category and ALL categories to build tree
+    const [category, allCategories] = await Promise.all([
+        getCategoryBySlug({ slug: slug }),
+        getCategories()
+    ]);
 
     if (!category) {
         return (
@@ -29,7 +34,20 @@ export default async function Page({ params }) {
         );
     }
 
-    const products = await getProductsByCategory({ categoryId: category.id });
+    // Helper to get descendant IDs recursively
+    const getDescendants = (parentId) => {
+        let descendants = [];
+        const children = allCategories.filter(c => c.parentId === parentId);
+        children.forEach(child => {
+            descendants.push(child.id);
+            descendants = [...descendants, ...getDescendants(child.id)];
+        });
+        return descendants;
+    };
+
+    const targetIds = [category.id, ...getDescendants(category.id)];
+
+    const products = await getProductsByCategoryIds({ categoryIds: targetIds });
 
     return (
         <main className="min-h-screen pt-28 pb-10 px-4 md:px-8 bg-background">

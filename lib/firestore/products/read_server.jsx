@@ -48,3 +48,23 @@ export const getProductsByCategory = async ({ categoryId }) => {
   );
   return list.docs.map((snap) => snap.data());
 };
+
+export const getProductsByCategoryIds = async ({ categoryIds }) => {
+  if (!categoryIds || categoryIds.length === 0) return [];
+
+  // Firestore "in" limit is 10
+  const chunks = [];
+  for (let i = 0; i < categoryIds.length; i += 10) {
+    chunks.push(categoryIds.slice(i, i + 10));
+  }
+
+  const promises = chunks.map(async (chunk) => {
+    const list = await getDocs(
+      query(collection(db, "products"), where("categoryId", "in", chunk))
+    );
+    return list.docs.map((snap) => snap.data());
+  });
+
+  const results = await Promise.all(promises);
+  return results.flat();
+};
