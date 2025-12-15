@@ -57,7 +57,7 @@ export async function POST(request) {
             discountAmount = subTotal;
         }
 
-        const finalAmount = subTotal - discountAmount + shippingCost;
+        let finalAmount = subTotal - discountAmount + shippingCost;
         if (finalAmount < 0) finalAmount = 0; // Should not happen but safety first
 
         const totalAmount = Math.round(finalAmount * 100); // Convert to cents
