@@ -71,7 +71,7 @@ export default function NouveautesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white pt-24">
+        <div className="min-h-screen bg-white pt-28">
             <header className="border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-6 py-16 text-center">
                     <h1 className="text-3xl md:text-4xl font-light text-neutral-900 tracking-tight mb-4">

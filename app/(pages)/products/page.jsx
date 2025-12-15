@@ -118,7 +118,7 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white pt-24">
+        <div className="min-h-screen bg-white pt-28">
             {/* Header */}
             <header className="border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-6 py-16">

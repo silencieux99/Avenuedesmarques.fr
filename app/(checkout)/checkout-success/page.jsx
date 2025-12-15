@@ -90,18 +90,18 @@ export default async function Page({ searchParams }) {
     <main>
       <Header />
       <SuccessMessage />
-      <section className="min-h-screen flex flex-col gap-3 justify-center items-center">
+      <section className="min-h-screen pt-28 flex flex-col gap-3 justify-center items-center">
         <div className="flex justify-center w-full">
           <img src="/svgs/Mobile payments-rafiki.svg" className="h-48" alt="" />
         </div>
         <h1 className="text-2xl font-semibold text-green">
-          Your Order Is{" "}
-          <span className="font-bold text-green-600">Successfully</span> Placed
+          Votre commande a été{" "}
+          <span className="font-bold text-green-600">validée avec succès</span>
         </h1>
         <div className="flex items-center gap-4 text-sm">
           <Link href={"/account"}>
-            <button className="text-blue-600 border border-blue-600 px-5 py-2 rounded-lg bg-white">
-              Go To Orders Page
+            <button className="text-white bg-black px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
+              Voir mes commandes
             </button>
           </Link>
         </div>

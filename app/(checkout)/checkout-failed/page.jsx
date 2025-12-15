@@ -22,20 +22,21 @@ export default async function Page({ searchParams }) {
   return (
     <main>
       <Header />
-      <section className="min-h-screen flex flex-col gap-3 justify-center items-center">
+      <section className="min-h-screen pt-28 flex flex-col gap-3 justify-center items-center">
         <div className="flex justify-center w-full">
           <img src="/svgs/Mobile payments-rafiki.svg" className="h-48" alt="" />
         </div>
-        <h1 className="text-2xl font-semibold">Your Payment Was Not Success</h1>
+        <h1 className="text-2xl font-semibold text-red-600">Le paiement a échoué</h1>
+        <p className="text-gray-600">Une erreur s'est produite lors du paiement</p>
         <div className="flex items-center gap-4 text-sm">
           <Link href={"/"}>
-            <button className="text-blue-600 border border-blue-600 px-5 py-2 rounded-lg bg-white">
-              Shop
+            <button className="text-black border border-black px-6 py-3 rounded-lg bg-white hover:bg-gray-50 transition-colors">
+              Retour à l'accueil
             </button>
           </Link>
           <Link href={checkout?.url}>
-            <button className="bg-blue-600 border px-5 py-2 rounded-lg text-white">
-              Retry
+            <button className="bg-black px-6 py-3 rounded-lg text-white hover:bg-gray-800 transition-colors">
+              Réessayer
             </button>
           </Link>
         </div>

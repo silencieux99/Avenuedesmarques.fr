@@ -68,7 +68,7 @@ export default function Page() {
       });
 
   return (
-    <main className="min-h-screen pt-24 pb-20 bg-white">
+    <main className="min-h-screen pt-28 pb-20 bg-white">
       <div className="text-center mb-8 px-4">
         <h1 className="font-serif text-3xl font-bold uppercase tracking-widest text-gray-900">
           Validation de commande

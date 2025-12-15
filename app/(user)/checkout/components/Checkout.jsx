@@ -1,12 +1,8 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  createCheckoutAndGetURL,
-  createCheckoutCODAndGetId,
-} from "@/lib/firestore/checkout/write";
+import { createCheckoutAndGetURL } from "@/lib/firestore/checkout/write";
 import { Button } from "@nextui-org/react";
-import confetti from "canvas-confetti";
 import { CheckSquare2Icon, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,7 +10,6 @@ import toast from "react-hot-toast";
 
 export default function Checkout({ productList }) {
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentMode, setPaymentMode] = useState("prepaid");
   const [address, setAddress] = useState(null);
   const router = useRouter();
   const { user } = useAuth();
@@ -55,23 +50,12 @@ export default function Checkout({ productList }) {
         shippingCost: shippingCost
       };
 
-      if (paymentMode === "prepaid") {
-        const url = await createCheckoutAndGetURL({
-          uid: user?.uid || null,
-          products: productList,
-          address: finalAddress,
-        });
-        router.push(url);
-      } else {
-        const checkoutId = await createCheckoutCODAndGetId({
-          uid: user?.uid || null,
-          products: productList,
-          address: finalAddress,
-        });
-        router.push(`/checkout-cod?checkout_id=${checkoutId}`);
-        toast.success("Successfully Placed!");
-        confetti();
-      }
+      const url = await createCheckoutAndGetURL({
+        uid: user?.uid || null,
+        products: productList,
+        address: finalAddress,
+      });
+      router.push(url);
     } catch (error) {
       toast.error(error?.message);
     }
@@ -193,12 +177,9 @@ export default function Checkout({ productList }) {
           <div className="pt-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Paiement</h2>
             <div className="border border-gray-300 rounded-lg overflow-hidden">
-              <div
-                className={`flex items-center gap-3 p-4 border-b border-gray-200 cursor-pointer ${paymentMode === 'prepaid' ? 'bg-gray-50' : 'bg-white'}`}
-                onClick={() => setPaymentMode("prepaid")}
-              >
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMode === 'prepaid' ? 'border-black' : 'border-gray-300'}`}>
-                  {paymentMode === 'prepaid' && <div className="w-2 h-2 rounded-full bg-black" />}
+              <div className="flex items-center gap-3 p-4 bg-gray-50">
+                <div className="w-4 h-4 rounded-full border border-black flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-black" />
                 </div>
                 <span className="text-sm font-medium flex-1">Carte bancaire</span>
                 <div className="flex gap-1.5 opacity-80">
@@ -208,9 +189,7 @@ export default function Checkout({ productList }) {
                 </div>
               </div>
 
-              <div
-                className={`flex-col p-4 bg-gray-50 text-sm text-gray-500 text-center ${paymentMode === 'prepaid' ? 'flex' : 'hidden'}`}
-              >
+              <div className="flex-col p-4 bg-gray-50 text-sm text-gray-500 text-center flex">
                 <div className="w-full bg-white border border-gray-200 rounded p-6 flex flex-col items-center gap-2">
                   <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -218,21 +197,6 @@ export default function Checkout({ productList }) {
                   <p>Après avoir cliqué sur "Payer", vous serez redirigé vers Stripe pour compléter votre achat en toute sécurité.</p>
                 </div>
               </div>
-
-              <div
-                className={`flex items-center gap-3 p-4 cursor-pointer ${paymentMode === 'cod' ? 'bg-gray-50' : 'bg-white'}`}
-                onClick={() => setPaymentMode("cod")}
-              >
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMode === 'cod' ? 'border-black' : 'border-gray-300'}`}>
-                  {paymentMode === 'cod' && <div className="w-2 h-2 rounded-full bg-black" />}
-                </div>
-                <span className="text-sm font-medium">Paiement à la livraison</span>
-              </div>
-              {paymentMode === 'cod' && (
-                <div className="p-4 bg-gray-50 text-sm text-gray-500 border-t border-gray-200">
-                  Payez en espèces à la réception de votre commande.
-                </div>
-              )}
             </div>
           </div>
 
@@ -242,7 +206,7 @@ export default function Checkout({ productList }) {
             onClick={handlePlaceOrder}
             className="w-full py-7 bg-black text-white rounded-lg text-sm font-bold shadow hover:bg-gray-800 transition-all mt-4"
           >
-            {paymentMode === 'cod' ? 'Valider la commande' : `Payer ${totalPrice.toFixed(2)} €`}
+            Payer {totalPrice.toFixed(2)} €
           </Button>
 
           <div className="text-center">
