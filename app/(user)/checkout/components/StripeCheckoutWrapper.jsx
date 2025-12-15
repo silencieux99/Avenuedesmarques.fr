@@ -6,12 +6,12 @@ import { useState } from 'react';
 import { Button } from '@nextui-org/react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Truck, Shield, CheckCircle } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function StripeCheckoutWrapper({ productList }) {
     const [clientSecret, setClientSecret] = useState('');
-    const [orderNumber, setOrderNumber] = useState('');
     const [step, setStep] = useState('form'); // 'form' or 'payment'
     const [address, setAddress] = useState({});
     const [loading, setLoading] = useState(false);
@@ -35,7 +35,6 @@ export default function StripeCheckoutWrapper({ productList }) {
             }
 
             setClientSecret(data.clientSecret);
-            setOrderNumber(data.orderNumber);
             setAddress(addressData);
             setStep('payment');
         } catch (err) {
@@ -55,9 +54,14 @@ export default function StripeCheckoutWrapper({ productList }) {
             colorDanger: '#df1b41',
             fontFamily: 'Montserrat, system-ui, sans-serif',
             borderRadius: '8px',
+            fontSizeBase: '16px', // Prevent iPhone zoom
         },
         rules: {
-            '.Input': { border: '1px solid #e5e7eb', padding: '12px' },
+            '.Input': {
+                border: '1px solid #e5e7eb',
+                padding: '12px',
+                fontSize: '16px', // Prevent iPhone zoom
+            },
             '.Input:focus': { border: '1px solid #000000' },
         },
     };
@@ -77,7 +81,6 @@ export default function StripeCheckoutWrapper({ productList }) {
             <PaymentForm
                 productList={productList}
                 address={address}
-                orderNumber={orderNumber}
                 onBack={() => setStep('form')}
             />
         </Elements>
@@ -116,6 +119,9 @@ function AddressForm({ productList, onSubmit, loading }) {
         onSubmit({ ...address, shippingCost });
     };
 
+    // Input classes with 16px font to prevent iPhone zoom
+    const inputClasses = "w-full border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black";
+
     return (
         <form onSubmit={handleSubmit}>
             <section className="flex flex-col-reverse lg:flex-row gap-8 max-w-[1200px] mx-auto py-6 px-4 md:px-6">
@@ -129,7 +135,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                             value={address.email}
                             onChange={(e) => handleAddress("email", e.target.value)}
                             required
-                            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-black"
+                            className={inputClasses}
                         />
                     </div>
 
@@ -140,18 +146,80 @@ function AddressForm({ productList, onSubmit, loading }) {
                             <select
                                 value={address.country}
                                 onChange={(e) => handleAddress("country", e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base bg-white"
+                                className={`${inputClasses} bg-white`}
                             >
                                 {schengenCountries.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            <input type="text" placeholder="Nom complet" value={address.fullName || ''} onChange={(e) => handleAddress("fullName", e.target.value)} required className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base" />
-                            <input type="text" placeholder="Adresse" value={address.addressLine1 || ''} onChange={(e) => handleAddress("addressLine1", e.target.value)} required className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base" />
-                            <input type="text" placeholder="Appartement, suite, etc. (optionnel)" value={address.addressLine2 || ''} onChange={(e) => handleAddress("addressLine2", e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base" />
+                            <input
+                                type="text"
+                                placeholder="Nom complet"
+                                value={address.fullName || ''}
+                                onChange={(e) => handleAddress("fullName", e.target.value)}
+                                required
+                                className={inputClasses}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Adresse"
+                                value={address.addressLine1 || ''}
+                                onChange={(e) => handleAddress("addressLine1", e.target.value)}
+                                required
+                                className={inputClasses}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Appartement, suite, etc. (optionnel)"
+                                value={address.addressLine2 || ''}
+                                onChange={(e) => handleAddress("addressLine2", e.target.value)}
+                                className={inputClasses}
+                            />
                             <div className="grid grid-cols-3 gap-3">
-                                <input type="text" placeholder="Code postal" value={address.pincode || ''} onChange={(e) => handleAddress("pincode", e.target.value)} required className="border border-gray-300 rounded-lg px-4 py-3 text-base" />
-                                <input type="text" placeholder="Ville" value={address.city || ''} onChange={(e) => handleAddress("city", e.target.value)} required className="col-span-2 border border-gray-300 rounded-lg px-4 py-3 text-base" />
+                                <input
+                                    type="text"
+                                    placeholder="Code postal"
+                                    value={address.pincode || ''}
+                                    onChange={(e) => handleAddress("pincode", e.target.value)}
+                                    required
+                                    className="border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Ville"
+                                    value={address.city || ''}
+                                    onChange={(e) => handleAddress("city", e.target.value)}
+                                    required
+                                    className="col-span-2 border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black"
+                                />
                             </div>
-                            <input type="tel" placeholder="Téléphone (optionnel)" value={address.phone || ''} onChange={(e) => handleAddress("phone", e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base" />
+                            <input
+                                type="tel"
+                                placeholder="Téléphone (optionnel)"
+                                value={address.phone || ''}
+                                onChange={(e) => handleAddress("phone", e.target.value)}
+                                className={inputClasses}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Shipping Method */}
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 mb-4">Mode de livraison</h2>
+                        <div className="border-2 border-black rounded-lg p-4 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 border-2 border-black rounded-full flex items-center justify-center">
+                                        <div className="w-3 h-3 bg-black rounded-full"></div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Truck className="w-5 h-5 text-gray-700" />
+                                        <div>
+                                            <p className="font-medium">Livraison Standard</p>
+                                            <p className="text-sm text-gray-500">3-5 jours ouvrables</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span className="font-bold">{shippingCost.toFixed(2)} €</span>
+                            </div>
                         </div>
                     </div>
 
@@ -159,7 +227,13 @@ function AddressForm({ productList, onSubmit, loading }) {
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4">Code promo</h2>
                         <div className="flex gap-3">
-                            <input type="text" placeholder="Entrez votre code promo" value={address.promoCode || ''} onChange={(e) => handleAddress("promoCode", e.target.value.toUpperCase())} className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-base font-mono" />
+                            <input
+                                type="text"
+                                placeholder="Entrez votre code promo"
+                                value={address.promoCode || ''}
+                                onChange={(e) => handleAddress("promoCode", e.target.value.toUpperCase())}
+                                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-[16px] font-mono focus:outline-none focus:ring-2 focus:ring-black"
+                            />
                             <button type="button" className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Appliquer</button>
                         </div>
                     </div>
@@ -172,13 +246,25 @@ function AddressForm({ productList, onSubmit, loading }) {
                             value={address.customerNote || ''}
                             onChange={(e) => handleAddress("customerNote", e.target.value)}
                             rows={3}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base resize-none"
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[16px] resize-none focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
 
                     <Button type="submit" isLoading={loading} className="w-full py-7 bg-black text-white rounded-lg font-bold">
                         Continuer vers le paiement
                     </Button>
+
+                    {/* Trust badges */}
+                    <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            <span>Paiement sécurisé</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Livraison assurée</span>
+                        </div>
+                    </div>
                 </section>
 
                 {/* Order Summary */}
@@ -200,7 +286,13 @@ function AddressForm({ productList, onSubmit, loading }) {
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-gray-600">Livraison</span><span>{shippingCost.toFixed(2)} €</span></div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 flex items-center gap-1">
+                                <Truck className="w-4 h-4" />
+                                Livraison Standard
+                            </span>
+                            <span>{shippingCost.toFixed(2)} €</span>
+                        </div>
                     </div>
                     <div className="border-t mt-4 pt-4">
                         <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{totalPrice.toFixed(2)} €</span></div>
@@ -212,7 +304,7 @@ function AddressForm({ productList, onSubmit, loading }) {
 }
 
 // Payment Form Component
-function PaymentForm({ productList, address, orderNumber, onBack }) {
+function PaymentForm({ productList, address, onBack }) {
     const stripe = useStripe();
     const elements = useElements();
     const [isLoading, setIsLoading] = useState(false);
@@ -254,18 +346,17 @@ function PaymentForm({ productList, address, orderNumber, onBack }) {
                         ← Modifier les informations
                     </button>
 
-                    {/* Order Number Preview */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-500">Numéro de commande</p>
-                        <p className="font-mono font-bold text-lg">{orderNumber}</p>
-                    </div>
-
                     {/* Shipping Summary */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="font-medium mb-2">Livraison à :</p>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Truck className="w-5 h-5 text-gray-600" />
+                            <p className="font-medium">Livraison à :</p>
+                        </div>
                         <p className="text-sm text-gray-600">{address.fullName}</p>
                         <p className="text-sm text-gray-600">{address.addressLine1}</p>
+                        {address.addressLine2 && <p className="text-sm text-gray-600">{address.addressLine2}</p>}
                         <p className="text-sm text-gray-600">{address.pincode} {address.city}</p>
+                        <p className="text-sm text-gray-600">{address.country}</p>
                     </div>
 
                     {/* Payment */}
@@ -277,10 +368,13 @@ function PaymentForm({ productList, address, orderNumber, onBack }) {
                     </div>
 
                     <Button type="submit" isLoading={isLoading} isDisabled={!stripe || isLoading} className="w-full py-7 bg-black text-white rounded-lg font-bold">
-                        {isLoading ? 'Traitement...' : `Payer ${totalPrice.toFixed(2)} €`}
+                        {isLoading ? 'Traitement en cours...' : `Payer ${totalPrice.toFixed(2)} €`}
                     </Button>
 
-                    <p className="text-center text-xs text-gray-500">Paiement 100% sécurisé • Powered by Stripe</p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                        <Shield className="w-4 h-4" />
+                        <span>Paiement 100% sécurisé par Stripe</span>
+                    </div>
                 </section>
 
                 {/* Order Summary */}
@@ -302,7 +396,13 @@ function PaymentForm({ productList, address, orderNumber, onBack }) {
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-gray-600">Livraison</span><span>{shippingCost.toFixed(2)} €</span></div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 flex items-center gap-1">
+                                <Truck className="w-4 h-4" />
+                                Livraison Standard
+                            </span>
+                            <span>{shippingCost.toFixed(2)} €</span>
+                        </div>
                     </div>
                     <div className="border-t mt-4 pt-4">
                         <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{totalPrice.toFixed(2)} €</span></div>
