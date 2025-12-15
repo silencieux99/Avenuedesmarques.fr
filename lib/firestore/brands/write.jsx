@@ -30,9 +30,18 @@ export const createNewBrand = async ({ data, image }) => {
   const imageURL = await uploadImage(image);
   const newId = doc(collection(db, `ids`)).id;
 
+  // Generate slug from name
+  const slug = data.name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   await setDoc(doc(db, `brands/${newId}`), {
     ...data,
     id: newId,
+    slug: slug,
     imageURL: imageURL,
     timestampCreate: Timestamp.now(),
   });
@@ -53,8 +62,17 @@ export const updateBrand = async ({ data, image }) => {
     imageURL = await uploadImage(image);
   }
 
+  // Regenerate slug from name
+  const slug = data.name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   await updateDoc(doc(db, `brands/${id}`), {
     ...data,
+    slug: slug,
     imageURL: imageURL,
     timestampUpdate: Timestamp.now(),
   });
