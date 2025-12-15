@@ -107,17 +107,25 @@ export default function Header() {
         <div className="max-w-[1600px] mx-auto px-4 md:px-6">
           {/* Main Navigation Bar */}
           <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Left: Menu Hamburger */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 hover:bg-gray-50 rounded-lg transition-colors z-[71]"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" strokeWidth={1.5} />
-              ) : (
-                <Menu className="w-6 h-6" strokeWidth={1.5} />
-              )}
-            </button>
+            {/* Left: Menu Hamburger & Search */}
+            <div className="flex items-center gap-1 md:gap-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 hover:bg-gray-50 rounded-lg transition-colors z-[71]"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" strokeWidth={1.5} />
+                ) : (
+                  <Menu className="w-6 h-6" strokeWidth={1.5} />
+                )}
+              </button>
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="p-2 hover:bg-gray-50 rounded-full transition-all"
+              >
+                <Search className="w-5 h-5 text-gray-700 hover:text-accent transition-colors" strokeWidth={1.5} />
+              </button>
+            </div>
 
             {/* Center: Logo */}
             <Link href="/" className="absolute left-1/2 -translate-x-1/2">
@@ -129,13 +137,6 @@ export default function Header() {
 
             {/* Right: Action Icons */}
             <div className="flex items-center gap-2 md:gap-3">
-              <button
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 hover:bg-gray-50 rounded-full transition-all"
-              >
-                <Search className="w-5 h-5 text-gray-700 hover:text-accent transition-colors" strokeWidth={1.5} />
-              </button>
-
               <AuthContextProvider>
                 <HeaderClientButtons />
                 <Link href="/account" className="hidden md:block p-2 hover:bg-gray-50 rounded-full transition-all">
@@ -184,8 +185,8 @@ export default function Header() {
                         <button
                           onClick={() => toggleExpand(item.name)}
                           className={`w-full px-4 py-3 rounded-lg transition-all flex items-center justify-between ${item.featured
-                              ? "bg-accent text-white font-semibold"
-                              : "hover:bg-gray-50"
+                            ? "bg-accent text-white font-semibold"
+                            : "hover:bg-gray-50"
                             }`}
                         >
                           <span>{item.name}</span>
@@ -207,8 +208,8 @@ export default function Header() {
                                       <span>{subItem.name}</span>
                                       <ChevronRight
                                         className={`w-3 h-3 transition-transform ${expandedMenu[subItem.name]
-                                            ? "rotate-90"
-                                            : ""
+                                          ? "rotate-90"
+                                          : ""
                                           }`}
                                       />
                                     </button>
@@ -250,8 +251,8 @@ export default function Header() {
                       >
                         <div
                           className={`px-4 py-3 rounded-lg transition-all ${item.featured
-                              ? "bg-accent text-white font-semibold"
-                              : "hover:bg-gray-50"
+                            ? "bg-accent text-white font-semibold"
+                            : "hover:bg-gray-50"
                             }`}
                         >
                           {item.name}
