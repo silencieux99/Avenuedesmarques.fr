@@ -21,8 +21,14 @@ export default function ProductsPage() {
     const [sortBy, setSortBy] = useState('newest');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [mounted, setMounted] = useState(false);
 
-    const { user } = useAuth();
+    // Prevent SSR issues with useAuth
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const { user } = mounted ? useAuth() : { user: null };
     const { data: userData } = useUser({ uid: user?.uid });
 
     // URL search params
