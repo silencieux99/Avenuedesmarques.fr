@@ -118,7 +118,7 @@ export default function ProductClientPage({ product }) {
     }
 
     return (
-        <div className="bg-white min-h-screen pt-10">
+        <div className="bg-white min-h-screen pt-28">
             <div className="lg:grid lg:grid-cols-[60%_1fr] min-h-screen">
 
                 {/* LEFT COLUMN: GALLERY */}
