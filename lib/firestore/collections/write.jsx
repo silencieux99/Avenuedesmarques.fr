@@ -1,4 +1,4 @@
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import {
   collection,
   deleteDoc,
@@ -7,7 +7,17 @@ import {
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+
+const uploadImage = async (file) => {
+  if (!file) return null;
+  const response = await fetch(`/api/upload?filename=${file.name}`, {
+    method: 'POST',
+    body: file,
+  });
+  if (!response.ok) throw new Error("Upload failed");
+  const blob = await response.json();
+  return blob.url;
+};
 
 export const createNewCollection = async ({ data, image }) => {
   if (!image) {
@@ -19,10 +29,9 @@ export const createNewCollection = async ({ data, image }) => {
   if (!data?.products || data?.products?.length === 0) {
     throw new Error("Products is required");
   }
+
+  const imageURL = await uploadImage(image);
   const newId = doc(collection(db, `ids`)).id;
-  const imageRef = ref(storage, `collections/${newId}`);
-  await uploadBytes(imageRef, image);
-  const imageURL = await getDownloadURL(imageRef);
 
   await setDoc(doc(db, `collections/${newId}`), {
     ...data,
@@ -48,9 +57,7 @@ export const updateCollection = async ({ data, image }) => {
   let imageURL = data?.imageURL;
 
   if (image) {
-    const imageRef = ref(storage, `collections/${id}`);
-    await uploadBytes(imageRef, image);
-    imageURL = await getDownloadURL(imageRef);
+    imageURL = await uploadImage(image);
   }
 
   await updateDoc(doc(db, `collections/${id}`), {

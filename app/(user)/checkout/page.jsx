@@ -49,22 +49,29 @@ export default function Page() {
   const productList =
     type === "buynow"
       ? [
-          {
-            id: productId,
-            quantity: 1,
-            product: products[0],
-          },
-        ]
+        {
+          id: productId,
+          quantity: 1,
+          product: products[0],
+        },
+      ]
       : data?.carts?.map((item) => {
-          return {
-            ...item,
-            product: products?.find((e) => e?.id === item?.id),
-          };
-        });
+        return {
+          ...item,
+          product: products?.find((e) => e?.id === item?.id),
+        };
+      });
 
   return (
-    <main className="p-5 flex flex-col gap-4">
-      <h1 className="text-xl">Checkout</h1>
+    <main className="min-h-screen pt-24 pb-20 bg-white">
+      <div className="text-center mb-8 px-4">
+        <h1 className="font-serif text-3xl font-bold uppercase tracking-widest text-gray-900">
+          Validation de commande
+        </h1>
+        <p className="text-xs text-gray-500 uppercase tracking-widest mt-2">
+          Dernière étape avant l'expédition
+        </p>
+      </div>
       <Checkout productList={productList} />
     </main>
   );

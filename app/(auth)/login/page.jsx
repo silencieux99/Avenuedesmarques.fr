@@ -46,64 +46,77 @@ export default function Page() {
   }, [user]);
 
   return (
-    <main className="w-full flex justify-center items-center bg-gray-300 md:p-24 p-10 min-h-screen">
-      <section className="flex flex-col gap-3">
-        <div className="flex justify-center">
-          <img className="h-12" src="/logo.png" alt="Logo" />
-        </div>
-        <div className="flex flex-col gap-3 bg-white md:p-10 p-5 rounded-xl md:min-w-[440px] w-full">
-          <h1 className="font-bold text-xl">Login With Email</h1>
+    <main className="w-full min-h-screen flex items-center justify-center bg-gray-50 px-4 py-20">
+      <section className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+        <div className="p-8 md:p-10 space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <Link href="/">
+              <h1 className="font-serif text-2xl font-bold tracking-wider text-gray-900 mx-auto w-fit cursor-pointer">
+                L'AVENUE<span className="text-accent">.</span>
+              </h1>
+            </Link>
+            <p className="text-gray-500 text-sm tracking-wide uppercase">Connexion à votre espace</p>
+          </div>
+
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleLogin();
             }}
-            className="flex flex-col gap-3"
+            className="flex flex-col gap-5"
           >
-            <input
-              placeholder="Enter Your Email"
-              type="email"
-              name="user-email"
-              id="user-email"
-              value={data?.email}
-              onChange={(e) => {
-                handleData("email", e.target.value);
-              }}
-              className="px-3 py-2 rounded-xl border focus:outline-none w-full"
-            />
-            <input
-              placeholder="Enter Your Password"
-              type="password"
-              name="user-password"
-              id="user-password"
-              value={data?.password}
-              onChange={(e) => {
-                handleData("password", e.target.value);
-              }}
-              className="px-3 py-2 rounded-xl border focus:outline-none w-full"
-            />
+            <div className="space-y-4">
+              <input
+                placeholder="Email"
+                type="email"
+                name="user-email"
+                id="user-email"
+                value={data?.email}
+                onChange={(e) => handleData("email", e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
+                required
+              />
+              <input
+                placeholder="Mot de passe"
+                type="password"
+                name="user-password"
+                id="user-password"
+                value={data?.password}
+                onChange={(e) => handleData("password", e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
+                required
+              />
+            </div>
+
             <Button
               isLoading={isLoading}
               isDisabled={isLoading}
               type="submit"
-              color="primary"
+              className="w-full bg-black text-white py-6 rounded-lg font-medium tracking-widest uppercase text-xs hover:bg-gray-800 transition-all"
             >
-              Login
+              Se connecter
             </Button>
           </form>
-          <div className="flex justify-between">
-            <Link href={`/sign-up`}>
-              <button className="font-semibold text-sm text-blue-700">
-                New? Create Account
-              </button>
+
+          <div className="flex items-center justify-between text-xs text-gray-500 font-medium">
+            <Link href="/sign-up" className="hover:text-accent transition-colors border-b border-transparent hover:border-accent pb-0.5">
+              Créer un compte
             </Link>
-            <Link href={`/forget-password`}>
-              <button className="font-semibold text-sm text-blue-700">
-                Forget Password?
-              </button>
+            <Link href="/forget-password" className="hover:text-accent transition-colors border-b border-transparent hover:border-accent pb-0.5">
+              Mot de passe oublié ?
             </Link>
           </div>
-          <hr />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-100"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-4 text-gray-400">Ou continuez avec</span>
+            </div>
+          </div>
+
           <SignInWithGoogleComponent />
         </div>
       </section>
@@ -129,8 +142,13 @@ function SignInWithGoogleComponent() {
     setIsLoading(false);
   };
   return (
-    <Button isLoading={isLoading} isDisabled={isLoading} onClick={handleLogin}>
-      Sign In With Google
+    <Button
+      isLoading={isLoading}
+      isDisabled={isLoading}
+      onClick={handleLogin}
+      className="w-full bg-white text-gray-700 border border-gray-200 py-6 rounded-lg font-medium text-xs tracking-wider uppercase hover:bg-gray-50 hover:border-gray-300 transition-all"
+    >
+      Continuer avec Google
     </Button>
   );
 }

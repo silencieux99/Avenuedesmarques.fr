@@ -8,10 +8,16 @@ import MyRating from "./MyRating";
 
 export default function ProductsGridView({ products }) {
   return (
-    <section className="w-full flex justify-center">
-      <div className="flex flex-col gap-5 max-w-[900px] p-5">
-        <h1 className="text-center font-semibold text-lg">Products</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+    <section className="w-full flex justify-center py-10 md:py-20">
+      <div className="flex flex-col gap-10 max-w-[1440px] px-4 w-full">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-center font-serif text-3xl md:text-4xl text-primary font-bold tracking-wide uppercase">
+            Nos Créations
+          </h1>
+          <div className="h-0.5 w-16 bg-accent" />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
           {products?.map((item) => {
             return <ProductCard product={item} key={item?.id} />;
           })}
@@ -23,68 +29,65 @@ export default function ProductsGridView({ products }) {
 
 export function ProductCard({ product }) {
   return (
-    <div className="flex flex-col gap-3 border p-4 rounded-lg">
-      <div className="relative w-full">
-        <img
-          src={product?.featureImageURL}
-          className="rounded-lg h-48 w-full object-cover"
-          alt={product?.title}
-        />
-        <div className="absolute top-1 right-1">
+    <div className="group flex flex-col gap-3 relative">
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-100">
+        <Link href={`/products/${product?.id}`}>
+          <img
+            src={product?.featureImageURL}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            alt={product?.title}
+          />
+        </Link>
+
+        {/* Badges / Overlay Actions */}
+        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <AuthContextProvider>
             <FavoriteButton productId={product?.id} />
           </AuthContextProvider>
         </div>
+
+        {product?.stock <= (product?.orders ?? 0) && (
+          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1">
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-red-500">Épuisé</span>
+          </div>
+        )}
+
+        {/* Hover Add to Cart */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <AuthContextProvider>
+            <AddToCartButton productId={product?.id} type="large" />
+          </AuthContextProvider>
+        </div>
       </div>
-      <Link href={`/products/${product?.id}`}>
-        <h1 className="font-semibold line-clamp-2 text-sm">{product?.title}</h1>
-      </Link>
-      <div className="">
-        <h2 className="text-green-500 text-sm font-semibold">
-          ₹ {product?.salePrice}{" "}
-          <span className="line-through text-xs text-gray-600">
-            ₹ {product?.price}
+
+      <div className="flex flex-col gap-1 text-center items-center">
+        <Link href={`/products/${product?.id}`}>
+          <h2 className="font-medium text-primary text-sm uppercase tracking-wide hover:text-accent transition-colors">
+            {product?.title}
+          </h2>
+        </Link>
+        <div className="flex items-center gap-2 text-sm font-light">
+          <span className="text-primary">
+            {product?.salePrice} €
           </span>
-        </h2>
-      </div>
-      <p className="text-xs text-gray-500 line-clamp-2">
-        {product?.shortDescription}
-      </p>
-      <Suspense>
-        <RatingReview product={product} />
-      </Suspense>
-      {product?.stock <= (product?.orders ?? 0) && (
-        <div className="flex">
-          <h3 className="text-red-500 rounded-lg text-xs font-semibold">
-            Out Of Stock
-          </h3>
+          {product?.price > product?.salePrice && (
+            <span className="line-through text-gray-400 text-xs">
+              {product?.price} €
+            </span>
+          )}
         </div>
-      )}
-      <div className="flex items-center gap-4 w-full">
-        <div className="w-full">
-          <Link href={`/checkout?type=buynow&productId=${product?.id}`}>
-            <button className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg text-xs w-full">
-              Buy Now
-            </button>
-          </Link>
-        </div>
-        <AuthContextProvider>
-          <AddToCartButton productId={product?.id} />
-        </AuthContextProvider>
       </div>
     </div>
   );
 }
 
+// Keeping RatingReview if needed, but visually hidden for minimal look unless requested
 async function RatingReview({ product }) {
   const counts = await getProductReviewCounts({ productId: product?.id });
   return (
-    <div className="flex gap-3 items-center">
+    <div className="flex gap-1 items-center">
       <MyRating value={counts?.averageRating ?? 0} />
-      <h1 className="text-xs text-gray-400">
-        <span>{counts?.averageRating?.toFixed(1)}</span> ({counts?.totalReviews}
-        )
-      </h1>
+      <span className="text-xs text-gray-400">({counts?.totalReviews})</span>
     </div>
   );
 }

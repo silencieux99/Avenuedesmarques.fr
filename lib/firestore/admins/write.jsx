@@ -1,4 +1,4 @@
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import {
   collection,
   deleteDoc,
@@ -7,7 +7,17 @@ import {
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+
+const uploadImage = async (file) => {
+  if (!file) return null;
+  const response = await fetch(`/api/upload?filename=${file.name}`, {
+    method: 'POST',
+    body: file,
+  });
+  if (!response.ok) throw new Error("Upload failed");
+  const blob = await response.json();
+  return blob.url;
+};
 
 export const createNewAdmin = async ({ data, image }) => {
   if (!image) {
@@ -21,10 +31,7 @@ export const createNewAdmin = async ({ data, image }) => {
   }
 
   const newId = data?.email;
-
-  const imageRef = ref(storage, `admins/${newId}`);
-  await uploadBytes(imageRef, image);
-  const imageURL = await getDownloadURL(imageRef);
+  const imageURL = await uploadImage(image);
 
   await setDoc(doc(db, `admins/${newId}`), {
     ...data,
@@ -50,9 +57,7 @@ export const updateAdmin = async ({ data, image }) => {
   let imageURL = data?.imageURL;
 
   if (image) {
-    const imageRef = ref(storage, `admins/${id}`);
-    await uploadBytes(imageRef, image);
-    imageURL = await getDownloadURL(imageRef);
+    imageURL = await uploadImage(image);
   }
 
   if (id === data?.email) {

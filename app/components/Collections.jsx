@@ -1,90 +1,41 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
-import { collection } from "firebase/firestore";
-import { Heart } from "lucide-react";
 import Link from "next/link";
-import Slider from "react-slick";
+import { ArrowRight } from "lucide-react";
 
 export default function Collections({ collections }) {
-  var settings = {
-    dots: true,
-    infinite: false,
-    speed: 500,
-    slidesToShow: 2,
-    slidesToScroll: 2,
-    initialSlide: 0,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-          infinite: true,
-          dots: true,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-          initialSlide: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
-  };
-
-  if (collections.length === 0) {
-    return <></>;
-  }
+  if (collections.length === 0) return null;
 
   return (
-    <div className="overflow-hidden md:p-10 p-5">
-      <Slider {...settings}>
-        {(collections?.length <= 2
-          ? [...collections, ...collections, ...collections]
-          : collections
-        )?.map((collection) => {
-          return (
-            <div className="px-2">
-              <div className="flex gap-4 bg-gradient-to-tr to-[#d9e2f1] from-[#cce7f5] p-7 w-full rounded-xl h-full">
-                <div className="w-full flex flex-col gap-2">
-                  <div className="flex flex-col gap-4">
-                    <h1 className="md:text-lg text-base font-semibold">
-                      {collection?.title}
-                    </h1>
-                    <h1 className="text-gray-600 text-xs md:text-sm max-w-96 line-clamp-2">
-                      {collection?.subTitle}
-                    </h1>
-                  </div>
-                  <div className="flex gap-4">
-                    <Link href={`/collections/${collection?.id}`}>
-                      <button className="bg-blue-500 text-white text-xs md:text-sm px-4 py-2 rounded-lg">
-                        SHOP NOW
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="w-full">
-                  <img
-                    className="h-[4rem] md:h-[9rem]"
-                    src={collection?.imageURL}
-                    alt={collection?.title}
-                  />
-                </div>
+    <section className="px-4 max-w-[1440px] mx-auto w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 h-auto md:h-[600px]">
+        {collections?.slice(0, 2).map((collection) => (
+          <Link
+            href={`/collections/${collection?.id}`}
+            key={collection?.id}
+            className="relative group overflow-hidden h-[400px] md:h-full w-full"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+              style={{ backgroundImage: `url(${collection?.imageURL})` }}
+            />
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
+
+            <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
+              <h3 className="text-white/80 text-xs md:text-sm tracking-[0.2em] mb-2 uppercase translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                Collection
+              </h3>
+              <h2 className="text-3xl md:text-5xl font-serif text-white mb-4 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                {collection?.title}
+              </h2>
+              <div className="flex items-center gap-2 text-white border-b border-white/50 w-fit pb-1 group-hover:border-white transition-colors translate-y-4 group-hover:translate-y-0 duration-500 delay-100">
+                <span className="text-sm tracking-widest uppercase">Découvrir</span>
+                <ArrowRight className="w-4 h-4" />
               </div>
             </div>
-          );
-        })}
-      </Slider>
-    </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

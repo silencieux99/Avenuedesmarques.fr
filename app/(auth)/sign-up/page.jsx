@@ -48,67 +48,73 @@ export default function Page() {
   };
 
   return (
-    <main className="w-full flex justify-center items-center bg-gray-300 md:p-24 p-10 min-h-screen">
-      <section className="flex flex-col gap-3">
-        <div className="flex justify-center">
-          <img className="h-12" src="/logo.png" alt="Logo" />
-        </div>
-        <div className="flex flex-col gap-3 bg-white md:p-10 p-5 rounded-xl md:min-w-[440px] w-full">
-          <h1 className="font-bold text-xl">Sign Up With Email</h1>
+    <main className="w-full min-h-screen flex items-center justify-center bg-gray-50 px-4 py-20">
+      <section className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+        <div className="p-8 md:p-10 space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <Link href="/">
+              <h1 className="font-serif text-2xl font-bold tracking-wider text-gray-900 mx-auto w-fit cursor-pointer">
+                L'AVENUE<span className="text-accent">.</span>
+              </h1>
+            </Link>
+            <p className="text-gray-500 text-sm tracking-wide uppercase">Créer un nouveau compte</p>
+          </div>
+
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSignUp();
             }}
-            className="flex flex-col gap-3"
+            className="flex flex-col gap-5"
           >
-            <input
-              placeholder="Enter Your Name"
-              type="text"
-              name="user-name"
-              id="user-name"
-              value={data?.name}
-              onChange={(e) => {
-                handleData("name", e.target.value);
-              }}
-              className="px-3 py-2 rounded-xl border focus:outline-none w-full"
-            />
-            <input
-              placeholder="Enter Your Email"
-              type="email"
-              name="user-email"
-              id="user-email"
-              value={data?.email}
-              onChange={(e) => {
-                handleData("email", e.target.value);
-              }}
-              className="px-3 py-2 rounded-xl border focus:outline-none w-full"
-            />
-            <input
-              placeholder="Enter Your Password"
-              type="password"
-              name="user-password"
-              id="user-password"
-              value={data?.password}
-              onChange={(e) => {
-                handleData("password", e.target.value);
-              }}
-              className="px-3 py-2 rounded-xl border focus:outline-none w-full"
-            />
+            <div className="space-y-4">
+              <input
+                placeholder="Nom complet"
+                type="text"
+                name="user-name"
+                id="user-name"
+                value={data?.name}
+                onChange={(e) => handleData("name", e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
+                required
+              />
+              <input
+                placeholder="Email"
+                type="email"
+                name="user-email"
+                id="user-email"
+                value={data?.email}
+                onChange={(e) => handleData("email", e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
+                required
+              />
+              <input
+                placeholder="Mot de passe"
+                type="password"
+                name="user-password"
+                id="user-password"
+                value={data?.password}
+                onChange={(e) => handleData("password", e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
+                required
+              />
+            </div>
+
             <Button
               isLoading={isLoading}
               isDisabled={isLoading}
               type="submit"
-              color="primary"
+              className="w-full bg-black text-white py-6 rounded-lg font-medium tracking-widest uppercase text-xs hover:bg-gray-800 transition-all"
             >
-              Sign Up
+              S'inscrire
             </Button>
           </form>
-          <div className="flex justify-between">
-            <Link href={`/login`}>
-              <button className="font-semibold text-sm text-blue-700">
-                Already user? Sign In
-              </button>
+
+          <div className="flex items-center justify-center text-xs text-gray-500 font-medium">
+            <span className="mr-2">Déjà un compte ?</span>
+            <Link href="/login" className="text-accent hover:text-accent/80 transition-colors font-bold uppercase tracking-wide border-b border-transparent hover:border-accent pb-0.5">
+              Se connecter
             </Link>
           </div>
         </div>

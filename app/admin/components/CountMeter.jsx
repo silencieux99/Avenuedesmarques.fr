@@ -3,37 +3,52 @@
 import { useOrdersCounts } from "@/lib/firestore/orders/read_count";
 import { useProductCount } from "@/lib/firestore/products/count/read_client";
 import { useUsersCount } from "@/lib/firestore/user/read_count";
+import { Package, ShoppingBag, TrendingUp, Users } from "lucide-react";
 
 export default function CountMeter() {
   const { data: totalProduct } = useProductCount();
   const { data: totalUsers } = useUsersCount();
   const { data: ordersCounts } = useOrdersCounts();
+
   return (
-    <section className="grid grid-cols-2 md:grid-cols-4 gap-5">
-      <Card imgURL={"/box.png"} title={"Products"} value={totalProduct ?? 0} />
+    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card
-        imgURL={"/received.png"}
-        title={"Orders"}
+        icon={<Package className="text-blue-500" />}
+        title={"Produits"}
+        value={totalProduct ?? 0}
+      />
+      <Card
+        icon={<ShoppingBag className="text-orange-500" />}
+        title={"Commandes"}
         value={ordersCounts?.totalOrders ?? 0}
       />
       <Card
-        imgURL={"/profit-up.png"}
-        title={"Revenue"}
-        value={`₹ ${(ordersCounts?.totalRevenue ?? 0) / 100}`}
+        icon={<TrendingUp className="text-green-500" />}
+        title={"Revenus"}
+        value={`${(ordersCounts?.totalRevenue ?? 0) / 100} €`}
       />
-      <Card imgURL={"/team.png"} title={"Customer"} value={totalUsers ?? 0} />
+      <Card
+        icon={<Users className="text-purple-500" />}
+        title={"Clients"}
+        value={totalUsers ?? 0}
+      />
     </section>
   );
 }
 
-function Card({ title, value, imgURL }) {
+function Card({ title, value, icon }) {
   return (
-    <div className="flex gap-2 px-4 py-2 bg-white shadow rounded-xl w-full justify-between items-center">
-      <div className="flex flex-col">
-        <h1 className="font-semibold text-xl">{value}</h1>
-        <h1 className="text-sm text-gray-700">{title}</h1>
+    <div className="flex flex-col gap-4 p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+      <div className="flex justify-between items-start">
+        <div className="p-3 bg-gray-50 rounded-lg">
+          {icon}
+        </div>
+        {/* Sparkline or trend could go here */}
       </div>
-      <img className="h-10" src={imgURL} alt={title} />
+      <div className="flex flex-col gap-1">
+        <h1 className="font-bold text-2xl text-gray-900">{value}</h1>
+        <h2 className="text-sm font-medium text-gray-500">{title}</h2>
+      </div>
     </div>
   );
 }

@@ -1,34 +1,33 @@
 "use client";
 
-import { useState } from "react";
-
 export default function Photos({ imageList }) {
-  const [selectedImage, setSelectedImage] = useState(imageList[0]);
-  if (imageList?.length === 0) {
-    return <></>;
-  }
+  if (imageList?.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3 w-full">
-      <div className="flex justify-center w-full">
-        <img
-          className="object-cover h-[350px] md:h-[430px]"
-          src={selectedImage}
-        />
+    <div className="flex flex-col gap-4 w-full">
+      {/* Main vertical stack for desktop */}
+      <div className="hidden md:flex flex-col gap-4 w-full">
+        {imageList.map((img, index) => (
+          <div key={index} className="w-full">
+            <img
+              src={img}
+              alt={`Product image ${index + 1}`}
+              className="w-full h-auto object-cover"
+            />
+          </div>
+        ))}
       </div>
-      <div className="flex flex-wrap justify-center items-center gap-3">
-        {imageList?.map((item) => {
-          return (
-            <div
-              onClick={() => {
-                setSelectedImage(item);
-              }}
-              className="w-[80px] border rounded p-2"
-            >
-              <img className="object-cover" src={item} alt="" />
-            </div>
-          );
-        })}
+
+      {/* Slider/Single view for mobile (simplified for now to just stack) */}
+      <div className="flex md:hidden flex-col gap-4 w-full">
+        {imageList.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            alt={`Product image ${index + 1}`}
+            className="w-full h-auto object-cover"
+          />
+        ))}
       </div>
     </div>
   );

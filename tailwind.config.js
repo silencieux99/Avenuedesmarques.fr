@@ -13,6 +13,23 @@ module.exports = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        primary: {
+          DEFAULT: "#111111",
+          foreground: "#ffffff",
+        },
+        secondary: {
+          DEFAULT: "#f4f4f5",
+          foreground: "#111111",
+        },
+        accent: {
+          DEFAULT: "#cba135", // Muted Gold
+          foreground: "#ffffff",
+        },
+        surface: "#fafafa",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+        serif: ["var(--font-playfair)", "serif"],
       },
     },
   },
