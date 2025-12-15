@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useCategories } from '@/lib/firestore/categories/read';
 import { updateCategory } from '@/lib/firestore/categories/write';
-import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -15,9 +15,13 @@ export default function CategoryManager() {
         return <div className="p-8 text-center text-gray-500">Chargement...</div>;
     }
 
-    // Grouper les catégories
-    const rootCategories = categories?.filter(c => !c.parentId) || [];
-    const childCategories = categories?.filter(c => c.parentId === selectedParentId) || [];
+    // Grouper et trier les catégories
+    const sortCategories = (cats) => {
+        return cats?.sort((a, b) => (a.rank || 0) - (b.rank || 0)); // Tri par rank par défaut
+    };
+
+    const rootCategories = sortCategories(categories?.filter(c => !c.parentId)) || [];
+    const childCategories = sortCategories(categories?.filter(c => c.parentId === selectedParentId)) || [];
 
     // Fonction pour changer le parent
     const handleAssignParent = async (categoryId, newParentId) => {
@@ -28,19 +32,51 @@ export default function CategoryManager() {
             await updateCategory({
                 data: { ...category, parentId: newParentId }
             });
-            toast.success('Catégorie déplacée avec succès !');
+            toast.success('Structure mise à jour !');
         } catch (error) {
             toast.error('Erreur lors du déplacement');
             console.error(error);
         }
     };
 
+    // Fonction de réorganisation (Monter/Descendre)
+    const handleMove = async (category, direction) => {
+        const isRoot = !category.parentId;
+        const siblings = isRoot
+            ? rootCategories
+            : sortCategories(categories.filter(c => c.parentId === category.parentId));
+
+        const currentIndex = siblings.findIndex(c => c.id === category.id);
+        if (currentIndex === -1) return;
+
+        const newIndex = currentIndex + direction;
+        if (newIndex < 0 || newIndex >= siblings.length) return;
+
+        // Swap ranks
+        const newSiblings = [...siblings];
+        // On force un recalcul de tous les ranks pour être sûr
+        // On échange d'abord dans le tableau temporaire
+        [newSiblings[currentIndex], newSiblings[newIndex]] = [newSiblings[newIndex], newSiblings[currentIndex]];
+
+        // On sauvegarde tout
+        try {
+            await Promise.all(newSiblings.map((cat, idx) =>
+                updateCategory({ data: { ...cat, rank: idx } })
+            ));
+            toast.success('Ordre mis à jour');
+        } catch (error) {
+            toast.error('Erreur de sauvegarde');
+            console.error(error);
+        }
+    };
+
+
     return (
         <div className="p-4 md:p-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold font-serif">Organisation des Catégories</h1>
-                    <p className="text-sm text-gray-500 mt-1">Sélectionnez une catégorie principale pour voir et gérer ses sous-catégories.</p>
+                    <h1 className="text-2xl font-bold font-serif">Organisation & Ordre du Menu</h1>
+                    <p className="text-sm text-gray-500 mt-1">Utilisez les flèches pour réorganiser l'ordre d'affichage.</p>
                 </div>
                 <Link
                     href="/admin/categories"
@@ -55,35 +91,53 @@ export default function CategoryManager() {
                 {/* COLONNE GAUCHE : Catégories Principales */}
                 <div className="bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm">
                     <div className="p-4 bg-gray-50 border-b font-medium text-gray-700 flex justify-between items-center">
-                        <span>📂 Catégories Principales (Parents)</span>
+                        <span>📂 Menu Principal (Racine)</span>
                         <span className="text-xs bg-gray-200 px-2 py-1 rounded-full">{rootCategories.length}</span>
                     </div>
                     <div className="overflow-y-auto flex-1 p-2 space-y-1">
-                        {rootCategories.map((cat) => (
+                        {rootCategories.map((cat, idx) => (
                             <div
                                 key={cat.id}
                                 onClick={() => setSelectedParentId(cat.id)}
                                 className={`
-                  flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                  flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all group
                   ${selectedParentId === cat.id
                                         ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm ring-1 ring-blue-200'
                                         : 'hover:bg-gray-50 text-gray-700 border border-transparent'}
                 `}
                             >
                                 <div className="flex items-center gap-3">
+                                    <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleMove(cat, -1); }}
+                                            className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
+                                            disabled={idx === 0}
+                                        >
+                                            <ArrowUp size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleMove(cat, 1); }}
+                                            className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
+                                            disabled={idx === rootCategories.length - 1}
+                                        >
+                                            <ArrowDown size={14} />
+                                        </button>
+                                    </div>
                                     {selectedParentId === cat.id ? <FolderOpen size={20} /> : <Folder size={20} />}
-                                    <span className="font-medium">{cat.name}</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{cat.name}</span>
+                                        <span className="text-[10px] text-gray-400">Position : {cat.rank ?? idx}</span>
+                                    </div>
                                 </div>
                                 <ChevronRight size={16} className={`text-gray-400 ${selectedParentId === cat.id ? 'text-blue-500' : ''}`} />
                             </div>
                         ))}
 
-                        {/* Zone pour remettre à la racine */}
+                        {/* Zone Warning Orphelins */}
                         <div className="mt-4 pt-4 border-t px-2">
-                            <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Orphelins / À classer</p>
-                            {categories?.filter(c => c.parentId && !rootCategories.find(r => r.id === c.parentId)).map(orphan => (
+                            {categories?.filter(c => c.parentId && !rootCategories.find(r => r.id === c.parentId) && !categories.find(p => p.id === c.parentId)).map(orphan => (
                                 <div key={orphan.id} className="p-2 bg-red-50 text-red-600 rounded mb-1 text-sm flex justify-between items-center">
-                                    <span>{orphan.name}</span>
+                                    <span>⚠️ {orphan.name} (Parent manquant)</span>
                                     <button
                                         onClick={() => handleAssignParent(orphan.id, null)}
                                         className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-100"
@@ -99,7 +153,7 @@ export default function CategoryManager() {
                 {/* COLONNE DROITE : Sous-catégories / Contenu */}
                 <div className="bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm">
                     <div className="p-4 bg-gray-50 border-b font-medium text-gray-700 flex items-center gap-2">
-                        <span>↳ Sous-catégories de</span>
+                        <span>↳ Sous-menu de</span>
                         <span className="font-bold text-blue-600">
                             {categories?.find(c => c.id === selectedParentId)?.name || '...'}
                         </span>
@@ -110,17 +164,23 @@ export default function CategoryManager() {
                             <div className="space-y-4">
                                 {/* 1. Liste des enfants actuels */}
                                 <div className="bg-white p-4 rounded-lg border shadow-sm">
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">Actuellement ici :</h3>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">Éléments du sous-menu :</h3>
                                     {childCategories.length > 0 ? (
                                         <div className="space-y-2">
-                                            {childCategories.map(child => (
+                                            {childCategories.map((child, idx) => (
                                                 <div key={child.id} className="flex justify-between items-center p-2 bg-gray-50 rounded border group hover:border-blue-300 transition-colors">
-                                                    <span className="font-medium">{child.name}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex flex-col opacity-50 group-hover:opacity-100">
+                                                            <button onClick={() => handleMove(child, -1)} className="hover:text-blue-600 disabled:opacity-30" disabled={idx === 0}><ArrowUp size={12} /></button>
+                                                            <button onClick={() => handleMove(child, 1)} className="hover:text-blue-600 disabled:opacity-30" disabled={idx === childCategories.length - 1}><ArrowDown size={12} /></button>
+                                                        </div>
+                                                        <span className="font-medium">{child.name}</span>
+                                                    </div>
                                                     <button
                                                         onClick={() => handleAssignParent(child.id, null)}
                                                         className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                                                     >
-                                                        Sortir d'ici
+                                                        Sortir
                                                     </button>
                                                 </div>
                                             ))}
