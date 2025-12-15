@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useUser } from '@/lib/firestore/user/read';
 import { updateCarts } from '@/lib/firestore/user/write';
@@ -9,15 +9,21 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
     const { user } = useAuth();
-    const { data: userData } = useUser({ uid: user?.uid });
+    const { data: userData, isLoading } = useUser({ uid: user?.uid });
     const [guestCart, setGuestCart] = useState([]);
+    const hasMigrated = useRef(false);
 
     // Load guest cart from localStorage on mount
     useEffect(() => {
         if (!user) {
             const savedCart = localStorage.getItem('guestCart');
             if (savedCart) {
-                setGuestCart(JSON.parse(savedCart));
+                try {
+                    setGuestCart(JSON.parse(savedCart));
+                } catch (e) {
+                    console.error('Error loading guest cart:', e);
+                    localStorage.removeItem('guestCart');
+                }
             }
         }
     }, [user]);
@@ -31,28 +37,35 @@ export function CartProvider({ children }) {
 
     // Migrate guest cart to user account when they log in
     useEffect(() => {
-        if (user && guestCart.length > 0) {
+        if (user && !isLoading && userData && guestCart.length > 0 && !hasMigrated.current) {
+            hasMigrated.current = true;
+
             const migrateCart = async () => {
-                const existingCart = userData?.carts || [];
-                const mergedCart = [...existingCart];
+                try {
+                    const existingCart = userData?.carts || [];
+                    const mergedCart = [...existingCart];
 
-                guestCart.forEach(guestItem => {
-                    const existingIndex = mergedCart.findIndex(item => item.id === guestItem.id);
-                    if (existingIndex >= 0) {
-                        mergedCart[existingIndex].quantity += guestItem.quantity;
-                    } else {
-                        mergedCart.push(guestItem);
-                    }
-                });
+                    guestCart.forEach(guestItem => {
+                        const existingIndex = mergedCart.findIndex(item => item.id === guestItem.id);
+                        if (existingIndex >= 0) {
+                            mergedCart[existingIndex].quantity += guestItem.quantity;
+                        } else {
+                            mergedCart.push(guestItem);
+                        }
+                    });
 
-                await updateCarts({ list: mergedCart, uid: user.uid });
-                setGuestCart([]);
-                localStorage.removeItem('guestCart');
+                    await updateCarts({ list: mergedCart, uid: user.uid });
+                    setGuestCart([]);
+                    localStorage.removeItem('guestCart');
+                } catch (error) {
+                    console.error('Error migrating cart:', error);
+                    hasMigrated.current = false;
+                }
             };
 
             migrateCart();
         }
-    }, [user, userData]);
+    }, [user, userData, isLoading, guestCart]);
 
     const cart = user ? (userData?.carts || []) : guestCart;
 

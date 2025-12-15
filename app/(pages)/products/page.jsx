@@ -143,7 +143,7 @@ export default function ProductsPage() {
             </header>
 
             {/* Toolbar */}
-            <div className="sticky top-16 z-40 bg-white border-b border-neutral-100">
+            <div className="bg-white border-b border-neutral-100">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         {/* Search */}
