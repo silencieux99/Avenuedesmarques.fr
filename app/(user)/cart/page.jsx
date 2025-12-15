@@ -157,6 +157,7 @@ function ProductItem({ item }) {
             <button
               onClick={() => handleUpdate(item?.quantity - 1)}
               disabled={isUpdating || item?.quantity <= 1}
+              aria-label="Réduire la quantité"
               className="p-2 text-gray-500 hover:text-black hover:bg-white rounded-l-lg transition-all disabled:opacity-50"
             >
               <Minus size={14} />
@@ -165,6 +166,7 @@ function ProductItem({ item }) {
             <button
               onClick={() => handleUpdate(item?.quantity + 1)}
               disabled={isUpdating}
+              aria-label="Augmenter la quantité"
               className="p-2 text-gray-500 hover:text-black hover:bg-white rounded-r-lg transition-all disabled:opacity-50"
             >
               <Plus size={14} />
@@ -174,6 +176,7 @@ function ProductItem({ item }) {
           <button
             onClick={handleRemove}
             disabled={isRemoving}
+            aria-label="Retirer du panier"
             className="p-2 text-gray-400 hover:text-red-500 transition-colors"
             title="Retirer du panier"
           >

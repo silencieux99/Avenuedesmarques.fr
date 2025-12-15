@@ -121,6 +121,7 @@ export default function Header() {
             <div className="flex items-center gap-1 md:gap-2">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
                 className="p-2 hover:bg-gray-50 rounded-lg transition-colors z-[71]"
               >
                 {isMobileMenuOpen ? (
@@ -131,6 +132,7 @@ export default function Header() {
               </button>
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Ouvrir la recherche"
                 className="p-2 hover:bg-gray-50 rounded-full transition-all"
               >
                 <Search className="w-5 h-5 text-gray-700 hover:text-accent transition-colors" strokeWidth={1.5} />
@@ -163,6 +165,7 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Rechercher un produit, une marque..."
+                  aria-label="Rechercher"
                   className="w-full px-4 md:px-6 py-3 md:py-4 bg-gray-50 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
                   autoFocus
                 />
@@ -182,6 +185,7 @@ export default function Header() {
             <div className="flex justify-end p-4">
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
+                aria-label="Fermer le menu"
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <X className="w-6 h-6 text-black" strokeWidth={1} />
@@ -197,6 +201,7 @@ export default function Header() {
                   <input
                     type="text"
                     placeholder="Rechercher..."
+                    aria-label="Rechercher dans le menu"
                     className="w-full border-b border-black py-2 pl-0 pr-8 text-black placeholder-gray-500 focus:outline-none focus:border-black rounded-none"
                   />
                   <Search className="w-4 h-4 absolute right-0 top-3 text-black" />

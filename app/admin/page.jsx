@@ -11,7 +11,7 @@ export default function Page() {
 
   useEffect(() => {
     let list = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 5; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       list.push(date);

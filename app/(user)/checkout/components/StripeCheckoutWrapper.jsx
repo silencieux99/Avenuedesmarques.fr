@@ -15,6 +15,7 @@ export default function StripeCheckoutWrapper({ productList }) {
     const [step, setStep] = useState('form'); // 'form' or 'payment'
     const [address, setAddress] = useState({});
     const [loading, setLoading] = useState(false);
+    const [orderSummary, setOrderSummary] = useState(null);
 
     const handleProceedToPayment = async (addressData) => {
         setLoading(true);
@@ -36,6 +37,15 @@ export default function StripeCheckoutWrapper({ productList }) {
 
             setClientSecret(data.clientSecret);
             setAddress(addressData);
+            // Save financial details from backend
+            setOrderSummary({
+                amountTotal: data.amountTotal,
+                amountSubTotal: data.amountSubTotal,
+                amountDiscount: data.amountDiscount,
+                amountShipping: data.amountShipping,
+                appliedPromoCode: data.appliedPromoCode
+            });
+
             setStep('payment');
             // Scroll to top when moving to payment step
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -84,14 +94,16 @@ export default function StripeCheckoutWrapper({ productList }) {
                 productList={productList}
                 address={address}
                 onBack={() => setStep('form')}
+                orderSummary={orderSummary}
             />
         </Elements>
     );
 }
 
-// Address Form Component
+// Address Form Component (unchanged logic mostly but keeping it intact for context)
 function AddressForm({ productList, onSubmit, loading }) {
     const { user } = useAuth();
+    // ... address state setup ...
     const [address, setAddress] = useState({
         email: user?.email || '',
         country: 'France',
@@ -124,6 +136,14 @@ function AddressForm({ productList, onSubmit, loading }) {
         onSubmit({ ...address, shippingCost });
     };
 
+    const handleApplyCoupon = () => {
+        if (!address.promoCode) {
+            return toast.error("Veuillez entrer un code promo");
+        }
+        // Simple visual feedback, real validation happens on next step
+        toast.success(`Code "${address.promoCode}" pris en compte pour le calcul à l'étape suivante.`);
+    };
+
     // Input classes with 16px font to prevent iPhone zoom
     const inputClasses = "w-full border border-gray-300 rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-black";
 
@@ -131,7 +151,7 @@ function AddressForm({ productList, onSubmit, loading }) {
         <form onSubmit={handleSubmit}>
             <section className="flex flex-col-reverse lg:flex-row gap-8 max-w-[1200px] mx-auto py-6 px-4 md:px-6">
                 <section className="flex-1 flex flex-col gap-6">
-                    {/* Contact */}
+                    {/* Contact - Same as before */}
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4">Contact</h2>
                         <input
@@ -249,7 +269,13 @@ function AddressForm({ productList, onSubmit, loading }) {
                                 aria-label="Code promotionnel"
                                 className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-[16px] font-mono focus:outline-none focus:ring-2 focus:ring-black"
                             />
-                            <button type="button" className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Appliquer</button>
+                            <button
+                                type="button"
+                                onClick={handleApplyCoupon}
+                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                            >
+                                Appliquer
+                            </button>
                         </div>
                     </div>
 
@@ -310,6 +336,7 @@ function AddressForm({ productList, onSubmit, loading }) {
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
+                        <div className="flex justify-between text-sm text-gray-500 italic pb-2">Code promo calculé à l'étape suivante</div>
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-600 flex items-center gap-1">
                                 <Truck className="w-4 h-4" />
@@ -328,17 +355,20 @@ function AddressForm({ productList, onSubmit, loading }) {
 }
 
 // Payment Form Component
-function PaymentForm({ productList, address, onBack }) {
+function PaymentForm({ productList, address, onBack, orderSummary }) {
     const stripe = useStripe();
     const elements = useElements();
     const [isLoading, setIsLoading] = useState(false);
 
-    const subTotal = productList?.reduce((prev, curr) => {
+    // Use orderSummary if available (backend calculation), otherwise fallback to local calculation
+    const subTotal = orderSummary ? orderSummary.amountSubTotal : (productList?.reduce((prev, curr) => {
         const price = curr?.product?.salePrice && curr?.product?.salePrice > 0 ? curr?.product?.salePrice : curr?.product?.price;
         return prev + (price * curr?.quantity);
-    }, 0) || 0;
-    const shippingCost = 5.90;
-    const totalPrice = subTotal + shippingCost;
+    }, 0) || 0);
+
+    const shippingCost = orderSummary ? orderSummary.amountShipping : 5.90;
+    const discountAmount = orderSummary ? orderSummary.amountDiscount : 0;
+    const totalPrice = orderSummary ? orderSummary.amountTotal : (subTotal + shippingCost);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -389,6 +419,11 @@ function PaymentForm({ productList, address, onBack }) {
                     {/* Payment */}
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4">Paiement sécurisé</h2>
+                        {orderSummary?.appliedPromoCode && (
+                            <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-sm font-medium border border-green-200">
+                                Code promo appliqué : {orderSummary.appliedPromoCode} (-{discountAmount.toFixed(2)} €)
+                            </div>
+                        )}
                         <div className="border border-gray-300 rounded-lg p-4">
                             <PaymentElement />
                         </div>
@@ -406,7 +441,7 @@ function PaymentForm({ productList, address, onBack }) {
 
                 {/* Order Summary */}
                 <aside className="lg:w-[400px] bg-gray-50 p-6 rounded-lg h-fit lg:sticky lg:top-24">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">Récapitulatif</h2>
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Récapitulatif de la commande</h2>
                     <div className="space-y-4">
                         {productList?.map((item) => {
                             const price = item.product.salePrice && item.product.salePrice > 0 ? item.product.salePrice : item.product.price;
@@ -420,9 +455,6 @@ function PaymentForm({ productList, address, onBack }) {
                                         <h3 className="text-sm font-medium truncate">{item.product.title}</h3>
                                         <div className="flex flex-col">
                                             <p className="text-sm text-gray-900 font-medium">{(price * item.quantity).toFixed(2)} €</p>
-                                            {item.product.salePrice > 0 && item.product.price > item.product.salePrice && (
-                                                <p className="text-xs text-gray-400 line-through">{(item.product.price * item.quantity).toFixed(2)} €</p>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -431,16 +463,24 @@ function PaymentForm({ productList, address, onBack }) {
                     </div>
                     <div className="border-t mt-6 pt-4 space-y-2">
                         <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total</span><span>{subTotal.toFixed(2)} €</span></div>
+
+                        {discountAmount > 0 && (
+                            <div className="flex justify-between text-sm text-green-600 font-medium">
+                                <span>Remise ({orderSummary?.appliedPromoCode})</span>
+                                <span>-{discountAmount.toFixed(2)} €</span>
+                            </div>
+                        )}
+
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-600 flex items-center gap-1">
                                 <Truck className="w-4 h-4" />
-                                Livraison Standard
+                                {orderSummary?.amountShipping === 0 ? "Livraison Offerte" : "Livraison Standard"}
                             </span>
-                            <span>{shippingCost.toFixed(2)} €</span>
+                            <span>{shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : 'Gratuite'}</span>
                         </div>
                     </div>
                     <div className="border-t mt-4 pt-4">
-                        <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{totalPrice.toFixed(2)} €</span></div>
+                        <div className="flex justify-between text-lg font-bold"><span>Total à payer</span><span>{totalPrice.toFixed(2)} €</span></div>
                     </div>
                 </aside>
             </section>
