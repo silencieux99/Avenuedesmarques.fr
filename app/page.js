@@ -27,13 +27,29 @@ export default async function Home() {
       getHeroSlides(),
     ]);
 
+  // Helper function to build full category path with parent slugs
+  const buildCategoryPath = (category) => {
+    const path = [];
+    let current = category;
+
+    // Build path from child to parent
+    while (current) {
+      path.unshift(current.slug);
+      current = categories.find(c => c.id === current.parentId);
+    }
+
+    return `/category/${path.join('/')}`;
+  };
+
   // Group products by category
   const productsByCategory = categories.reduce((acc, category) => {
     const categoryProducts = products.filter(p => p.categoryId === category.id).slice(0, 4); // Limit to 4 for homepage
     if (categoryProducts.length > 0) {
+      const categoryPath = buildCategoryPath(category);
       acc.push({
         category: category,
-        products: categoryProducts
+        products: categoryProducts,
+        categoryPath: categoryPath
       });
     }
     return acc;
@@ -59,7 +75,7 @@ export default async function Home() {
                     </h2>
                     <div className="h-1 w-20 bg-accent mx-auto md:mx-0" />
                   </div>
-                  <Link href={`/category/${section.category.slug}`} className="group flex items-center gap-2 text-sm uppercase tracking-widest font-medium hover:text-accent transition-colors">
+                  <Link href={section.categoryPath} className="group flex items-center gap-2 text-sm uppercase tracking-widest font-medium hover:text-accent transition-colors">
                     Voir tout
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </Link>
