@@ -9,7 +9,6 @@ import Header from "./components/Header";
 import HeroModern from "./components/HeroModern";
 import Collections from "./components/Collections";
 import { getCollections } from "@/lib/firestore/collections/read_server";
-import Categories from "./components/Categories";
 import { getCategories } from "@/lib/firestore/categories/read_server";
 import Brands from "./components/Brands";
 import { getBrands } from "@/lib/firestore/brands/read_server";
@@ -75,7 +74,7 @@ export default async function Home() {
             </section>
           ))}
 
-          <Categories categories={categories} />
+
           <Brands brands={brands} />
         </div>
       </div>

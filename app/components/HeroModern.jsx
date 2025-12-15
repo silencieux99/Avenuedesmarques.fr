@@ -1,34 +1,58 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
 export default function HeroModern({ heroProducts }) {
-    // Use the first hero product or fallback to a luxury image
-    const mainProduct = heroProducts?.[0];
-    const heroImage = mainProduct?.featureImageURL || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop";
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Filter valid products with images
+    const validProducts = heroProducts?.filter(p => p.featureImageURL) || [];
+    // If no products, fallback to default images
+    const images = validProducts.length > 0
+        ? validProducts.map(p => p.featureImageURL)
+        : [
+            "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop"
+        ];
+
+    useEffect(() => {
+        if (images.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % images.length);
+        }, 5000); // Change every 5 seconds
+        return () => clearInterval(interval);
+    }, [images.length]);
 
     return (
         <section className="relative h-[calc(90vh)] md:h-[calc(100vh-40px)] w-full overflow-hidden bg-neutral-900">
             {/* Background Media - Immersive & Darkened */}
             <div className="absolute inset-0 z-0">
-                <div className="relative h-full w-full">
-                    {heroImage && (
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentIndex}
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5, ease: "easeInOut" }}
+                        className="absolute inset-0 h-full w-full"
+                    >
                         <Image
-                            src={heroImage}
+                            src={images[currentIndex]}
                             alt="Collection Avenue des Marques"
                             fill
                             className="object-cover object-top opacity-90"
-                            priority
+                            priority={currentIndex === 0}
                             sizes="100vw"
                         />
-                    )}
-                </div>
+                    </motion.div>
+                </AnimatePresence>
+
                 {/* Fine Grain Overlay */}
-                <div className="absolute inset-0 bg-black/20 bg-[url('/noise.png')] opacity-20 mix-blend-overlay" />
+                <div className="absolute inset-0 bg-black/20 bg-[url('/noise.png')] opacity-20 mix-blend-overlay z-10" />
                 {/* Gradient Fade at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/60 to-transparent z-10" />
             </div>
 
             {/* Content Container - Floating & Minimal */}
