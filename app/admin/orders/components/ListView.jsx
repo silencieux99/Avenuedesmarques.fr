@@ -81,22 +81,23 @@ export default function ListView() {
           {orders?.map((item) => (
             <TableRow key={item?.id}>
               <TableCell>
-                <UserCell uid={item?.uid} />
+                <UserCell uid={item?.uid || item?.userId} order={item} />
               </TableCell>
               <TableCell>
                 {new Intl.NumberFormat("fr-FR", {
                   style: "currency",
                   currency: "EUR",
                 }).format(
+                  item?.amountTotal ||
                   item?.checkout?.line_items?.reduce((prev, curr) => {
                     return (
                       prev +
                       (curr?.price_data?.unit_amount / 100) * curr?.quantity
                     );
-                  }, 0)
+                  }, 0) || 0
                 )}
               </TableCell>
-              <TableCell>{item?.checkout?.line_items?.length}</TableCell>
+              <TableCell>{(item?.line_items || item?.checkout?.line_items)?.length || 0}</TableCell>
               <TableCell>
                 <Chip
                   className="capitalize"
@@ -165,8 +166,22 @@ export default function ListView() {
   );
 }
 
-function UserCell({ uid }) {
+function UserCell({ uid, order }) {
   const { data: user } = useUser({ uid });
+
+  // For guest orders, show customer info from order
+  if (!uid || uid === 'guest' || order?.isGuest) {
+    return (
+      <User
+        avatarProps={{ radius: "lg", name: order?.customerName?.charAt(0) || "I" }}
+        description={order?.customerEmail || "Invité"}
+        name={order?.customerName || "Invité"}
+      >
+        {order?.customerEmail || "Commande invité"}
+      </User>
+    );
+  }
+
   return (
     <User
       avatarProps={{ radius: "lg", src: user?.photoURL }}
