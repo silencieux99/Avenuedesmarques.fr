@@ -6,11 +6,11 @@ import { updateCategory } from '@/lib/firestore/categories/write';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronRight, ChevronDown, FolderOpen, Folder } from 'lucide-react';
+import { GripVertical, ChevronRight, ChevronDown, FolderOpen, Folder, X, ArrowUpRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
-function SortableCategory({ category, children, level = 0, isExpanded, onToggle }) {
+function SortableCategory({ category, children, level = 0, isExpanded, onToggle, onRemoveParent, onMakeChild }) {
     const {
         attributes,
         listeners,
@@ -45,7 +45,7 @@ function SortableCategory({ category, children, level = 0, isExpanded, onToggle 
                 </div>
 
                 {/* Expand/Collapse Button */}
-                {hasChildren && (
+                {hasChildren ? (
                     <button
                         onClick={() => onToggle(category.id)}
                         className="p-1 hover:bg-gray-200 rounded"
@@ -56,6 +56,8 @@ function SortableCategory({ category, children, level = 0, isExpanded, onToggle 
                             <ChevronRight size={18} className="text-gray-600" />
                         )}
                     </button>
+                ) : (
+                    <div className="w-[26px]" />
                 )}
 
                 {/* Icon */}
@@ -75,13 +77,28 @@ function SortableCategory({ category, children, level = 0, isExpanded, onToggle 
                     )}
                 </div>
 
-                {/* Edit Link */}
-                <Link
-                    href={`/admin/categories?id=${category.id}`}
-                    className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                >
-                    Modifier
-                </Link>
+                {/* Actions */}
+                <div className="flex gap-2">
+                    {/* Remove from parent button */}
+                    {category.parentId && (
+                        <button
+                            onClick={() => onRemoveParent(category.id)}
+                            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded flex items-center gap-1"
+                            title="Retirer de la catégorie parente"
+                        >
+                            <ArrowUpRight size={14} />
+                            Sortir
+                        </button>
+                    )}
+
+                    {/* Edit Link */}
+                    <Link
+                        href={`/admin/categories?id=${category.id}`}
+                        className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                    >
+                        Modifier
+                    </Link>
+                </div>
             </div>
 
             {/* Children */}
@@ -95,6 +112,8 @@ function SortableCategory({ category, children, level = 0, isExpanded, onToggle 
                             level={level + 1}
                             isExpanded={child.isExpanded}
                             onToggle={onToggle}
+                            onRemoveParent={onRemoveParent}
+                            onMakeChild={onMakeChild}
                         />
                     ))}
                 </div>
@@ -107,6 +126,7 @@ export default function CategoryManager() {
     const { data: categories, isLoading } = useCategories();
     const [categoryTree, setCategoryTree] = useState([]);
     const [expandedIds, setExpandedIds] = useState(new Set());
+    const [dragMode, setDragMode] = useState('reorder'); // 'reorder' or 'nest'
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -151,6 +171,24 @@ export default function CategoryManager() {
         });
     };
 
+    const handleRemoveParent = async (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return;
+
+        try {
+            await updateCategory({
+                data: {
+                    ...category,
+                    parentId: null,
+                },
+            });
+            toast.success(`${category.name} est maintenant une catégorie principale`);
+        } catch (error) {
+            toast.error('Erreur lors de la modification');
+            console.error(error);
+        }
+    };
+
     const handleDragEnd = async (event) => {
         const { active, over } = event;
 
@@ -161,17 +199,32 @@ export default function CategoryManager() {
 
         if (!activeCategory || !overCategory) return;
 
+        // Prevent making a category a child of itself or its own children
+        const isDescendant = (parentId, childId) => {
+            const parent = categories.find(c => c.id === parentId);
+            if (!parent) return false;
+            if (parent.parentId === childId) return true;
+            if (parent.parentId) return isDescendant(parent.parentId, childId);
+            return false;
+        };
+
+        if (isDescendant(overCategory.id, activeCategory.id)) {
+            toast.error('Impossible : créerait une boucle de catégories');
+            return;
+        }
+
         try {
-            // If dropped on a category, make it a child
-            if (overCategory.id !== activeCategory.id) {
-                await updateCategory({
-                    data: {
-                        ...activeCategory,
-                        parentId: overCategory.id,
-                    },
-                });
-                toast.success(`${activeCategory.name} déplacé sous ${overCategory.name}`);
-            }
+            // Make active category a child of over category
+            await updateCategory({
+                data: {
+                    ...activeCategory,
+                    parentId: overCategory.id,
+                },
+            });
+            toast.success(`${activeCategory.name} déplacé sous ${overCategory.name}`);
+
+            // Auto-expand the parent
+            setExpandedIds(prev => new Set([...prev, overCategory.id]));
         } catch (error) {
             toast.error('Erreur lors du déplacement');
             console.error(error);
@@ -194,7 +247,7 @@ export default function CategoryManager() {
                 <div>
                     <h1 className="text-2xl font-bold">Gestion des Catégories</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        Glissez-déposez pour réorganiser et créer des sous-catégories
+                        Glissez une catégorie sur une autre pour créer une sous-catégorie
                     </p>
                 </div>
                 <Link
@@ -205,12 +258,13 @@ export default function CategoryManager() {
                 </Link>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <h3 className="font-semibold mb-2">💡 Comment utiliser :</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Glissez une catégorie sur une autre pour en faire une sous-catégorie</li>
-                    <li>• Sur mobile : maintenez appuyé 200ms avant de glisser</li>
-                    <li>• Cliquez sur les flèches pour déplier/replier les sous-catégories</li>
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
+                <h3 className="font-semibold mb-2 text-blue-900">💡 Comment utiliser :</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• <strong>Créer une sous-catégorie</strong> : Glissez une catégorie sur une autre</li>
+                    <li>• <strong>Retirer une sous-catégorie</strong> : Cliquez sur le bouton "Sortir"</li>
+                    <li>• <strong>Sur mobile</strong> : Maintenez appuyé 200ms avant de glisser</li>
+                    <li>• <strong>Déplier/Replier</strong> : Cliquez sur les flèches</li>
                 </ul>
             </div>
 
@@ -231,6 +285,7 @@ export default function CategoryManager() {
                                 children={item.children}
                                 isExpanded={item.isExpanded}
                                 onToggle={toggleExpand}
+                                onRemoveParent={handleRemoveParent}
                             />
                         ))}
                     </div>
