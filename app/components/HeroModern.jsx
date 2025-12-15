@@ -49,8 +49,8 @@ export default function HeroModern({ heroProducts }) {
                     </motion.div>
                 </AnimatePresence>
 
-                {/* Fine Grain Overlay */}
-                <div className="absolute inset-0 bg-black/20 bg-[url('/noise.png')] opacity-20 mix-blend-overlay z-10" />
+                {/* Fine Grain Overlay - Removed noise.png due to 404, using CSS pattern if needed or just transparent */}
+                <div className="absolute inset-0 bg-black/20 opacity-20 z-10" />
                 {/* Gradient Fade at bottom */}
                 <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/60 to-transparent z-10" />
             </div>

@@ -278,18 +278,20 @@ export default function Header() {
               </div>
 
               {/* User Links */}
-              <div className="mt-10 pt-6 border-t border-gray-100 space-y-4">
-                <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-sm font-medium text-black">
-                  <User className="w-4 h-4" />
-                  Mon Compte
-                </Link>
-                <div className="pt-2">
-                  <AdminButton />
+              <AuthContextProvider>
+                <div className="mt-10 pt-6 border-t border-gray-100 space-y-4">
+                  <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-sm font-medium text-black">
+                    <User className="w-4 h-4" />
+                    Mon Compte
+                  </Link>
+                  <div className="pt-2">
+                    <AdminButton />
+                  </div>
+                  <div className="pt-2">
+                    <LogoutButton />
+                  </div>
                 </div>
-                <div className="pt-2">
-                  <LogoutButton />
-                </div>
-              </div>
+              </AuthContextProvider>
             </div>
 
             {/* Footer / Socials (Optional placeholder) */}
