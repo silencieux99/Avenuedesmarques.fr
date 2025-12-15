@@ -70,16 +70,21 @@ export default function ListView() {
     <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl w-full">
       <Table aria-label="Orders table">
         <TableHeader>
+          <TableColumn>N° COMMANDE</TableColumn>
           <TableColumn>CLIENT</TableColumn>
           <TableColumn>TOTAL</TableColumn>
           <TableColumn>PRODUITS</TableColumn>
-          <TableColumn>PAIEMENT</TableColumn>
           <TableColumn>STATUT</TableColumn>
           <TableColumn>ACTIONS</TableColumn>
         </TableHeader>
         <TableBody emptyContent={"Aucune commande trouvée."}>
           {orders?.map((item) => (
             <TableRow key={item?.id}>
+              <TableCell>
+                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                  {item?.orderNumber || item?.id?.slice(0, 12) + '...'}
+                </span>
+              </TableCell>
               <TableCell>
                 <UserCell uid={item?.uid || item?.userId} order={item} />
               </TableCell>
@@ -101,19 +106,7 @@ export default function ListView() {
               <TableCell>
                 <Chip
                   className="capitalize"
-                  color={
-                    item?.paymentMode === "cod" ? "warning" : "success"
-                  }
-                  size="sm"
-                  variant="flat"
-                >
-                  {item?.paymentMode === "cod" ? "À la livraison" : "Carte Bancaire"}
-                </Chip>
-              </TableCell>
-              <TableCell>
-                <Chip
-                  className="capitalize"
-                  color={statusColorMap[item?.status] || "default"}
+                  color={statusColorMap[item?.status] || statusColorMap[item?.paymentStatus] || "default"}
                   size="sm"
                   variant="flat"
                 >
@@ -204,6 +197,8 @@ const statusColorMap = {
   out_for_delivery: "secondary",
   delivered: "success",
   cancelled: "danger",
+  paid: "success",
+  failed: "danger",
 };
 
 const statusTranslation = {
@@ -214,4 +209,6 @@ const statusTranslation = {
   out_for_delivery: "En livraison",
   delivered: "Livrée",
   cancelled: "Annulée",
+  paid: "Payée",
+  failed: "Échouée",
 };

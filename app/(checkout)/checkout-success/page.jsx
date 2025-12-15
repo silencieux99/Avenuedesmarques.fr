@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/app/components/Header';
@@ -9,16 +9,43 @@ import { Check, Copy, Package, Mail, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useCart } from '@/contexts/CartContext';
 
+// Main page wrapper with Suspense
 export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}
+
+// Loading state component
+function LoadingState() {
+  return (
+    <main className="min-h-screen bg-white">
+      <Header />
+      <section className="pt-32 pb-20 flex flex-col gap-3 justify-center items-center px-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        <p className="text-gray-600">Chargement...</p>
+      </section>
+      <Footer />
+    </main>
+  );
+}
+
+// Main content component
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const paymentIntent = searchParams.get('payment_intent');
   const redirectStatus = searchParams.get('redirect_status');
+  const { clearCart } = useCart();
 
   const [copied, setCopied] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cartCleared, setCartCleared] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -38,9 +65,10 @@ export default function CheckoutSuccessPage() {
             setOrderNumber(`ADM-${timestamp}-${random}`);
           }
 
-          // Clear cart from localStorage if guest
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('guestCart');
+          // Clear cart (both guest and logged-in users)
+          if (!cartCleared) {
+            await clearCart();
+            setCartCleared(true);
           }
 
           // Launch confetti
@@ -59,7 +87,7 @@ export default function CheckoutSuccessPage() {
     };
 
     fetchOrder();
-  }, [redirectStatus, paymentIntent]);
+  }, [redirectStatus, paymentIntent, clearCart, cartCleared]);
 
   const copyOrderNumber = () => {
     navigator.clipboard.writeText(orderNumber);
@@ -68,16 +96,7 @@ export default function CheckoutSuccessPage() {
   };
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-white">
-        <Header />
-        <section className="pt-32 pb-20 flex flex-col gap-3 justify-center items-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          <p className="text-gray-600">Confirmation de votre commande...</p>
-        </section>
-        <Footer />
-      </main>
-    );
+    return <LoadingState />;
   }
 
   if (redirectStatus !== 'succeeded') {
