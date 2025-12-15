@@ -4,9 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProductsByIds } from "@/lib/firestore/products/read";
 import { CircularProgress } from "@nextui-org/react";
 import { useSearchParams } from "next/navigation";
-import Checkout from "./components/Checkout";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import StripeCheckoutWrapper from "./components/StripeCheckoutWrapper";
 
 export default function Page() {
   const { user } = useAuth();
@@ -68,16 +68,16 @@ export default function Page() {
       });
 
   return (
-    <main className="min-h-screen pt-28 pb-20 bg-white">
+    <main className="min-h-screen pt-28 pb-20 bg-gray-50">
       <div className="text-center mb-8 px-4">
         <h1 className="font-serif text-3xl font-bold uppercase tracking-widest text-gray-900">
-          Validation de commande
+          Paiement sécurisé
         </h1>
         <p className="text-xs text-gray-500 uppercase tracking-widest mt-2">
-          Dernière étape avant l'expédition
+          Finalisez votre commande
         </p>
       </div>
-      <Checkout productList={productList} />
+      <StripeCheckoutWrapper productList={productList} />
     </main>
   );
 }

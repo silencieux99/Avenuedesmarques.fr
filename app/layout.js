@@ -8,6 +8,12 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 export const metadata = {
   title: "Avenue des Marques - Luxe & Élégance",
   description: "Découvrez les plus grandes marques de luxe et tendance.",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({ children }) {
