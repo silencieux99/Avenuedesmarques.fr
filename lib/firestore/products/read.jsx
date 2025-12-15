@@ -12,16 +12,35 @@ import {
 } from "firebase/firestore";
 import useSWRSubscription from "swr/subscription";
 
-export function useProducts({ pageLimit, lastSnapDoc }) {
+export function useProducts({ pageLimit, lastSnapDoc, categoryIds, brandId }) {
   const { data, error } = useSWRSubscription(
-    ["products", pageLimit, lastSnapDoc],
-    ([path, pageLimit, lastSnapDoc], { next }) => {
+    ["products", pageLimit, lastSnapDoc, categoryIds, brandId],
+    ([path, pageLimit, lastSnapDoc, categoryIds, brandId], { next }) => {
       const ref = collection(db, path);
-      let q = query(ref, limit(pageLimit ?? 10));
+
+      let constraints = [];
+
+      if (categoryIds && categoryIds.length > 0) {
+        // Firestore 'in' has a limit of 10
+        const safeIds = categoryIds.slice(0, 10);
+        constraints.push(where("categoryId", "in", safeIds));
+      }
+
+      if (brandId) {
+        constraints.push(where("brandId", "==", brandId));
+      }
+
+      // Important: Add order by logic if needed, but filtering first is usually safer for compound query
+      // However, Firestore requires orderBy to match inequality filters if used.
+      // Here we just use equality.
+
+      constraints.push(limit(pageLimit ?? 10));
 
       if (lastSnapDoc) {
-        q = query(q, startAfter(lastSnapDoc));
+        constraints.push(startAfter(lastSnapDoc));
       }
+
+      let q = query(ref, ...constraints);
 
       const unsub = onSnapshot(
         q,

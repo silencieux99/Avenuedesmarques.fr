@@ -57,6 +57,22 @@ export default function ListView() {
     setLastSnapDocList([]);
   }, [pageLimit]);
 
+  // Helper to get all descendant category IDs
+  const getCategoryDescendants = (catId, allCats) => {
+    if (!catId || !allCats) return [];
+    let descendants = [catId];
+    const children = allCats.filter(c => c.parentId === catId);
+    children.forEach(child => {
+      descendants = [...descendants, ...getCategoryDescendants(child.id, allCats)];
+    });
+    return descendants;
+  };
+
+  const targetCategoryIds = useMemo(() => {
+    if (!selectedCategory) return null;
+    return getCategoryDescendants(selectedCategory, categories);
+  }, [selectedCategory, categories]);
+
   const {
     data: products,
     error,
@@ -68,7 +84,24 @@ export default function ListView() {
       lastSnapDocList?.length === 0
         ? null
         : lastSnapDocList[lastSnapDocList?.length - 1],
+    categoryIds: targetCategoryIds, // Changed from categoryId to categoryIds array
+    brandId: selectedBrand,
   });
+
+  // Helper to render categories with indentation
+  const renderCategoryOptions = (cats, parentId = null, level = 0) => {
+    if (!cats) return null;
+    return cats
+      .filter(c => c.parentId === parentId)
+      .map(c => (
+        <>
+          <option key={c.id} value={c.id}>
+            {"\u00A0\u00A0".repeat(level) + c.name}
+          </option>
+          {renderCategoryOptions(cats, c.id, level + 1)}
+        </>
+      ));
+  };
 
   const handleNextPage = () => {
     let newStack = [...lastSnapDocList];
@@ -82,7 +115,7 @@ export default function ListView() {
     setLastSnapDocList(newStack);
   };
 
-  // Client-side Filtering
+  // Client-side Filtering (Search Title Only)
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
@@ -91,20 +124,9 @@ export default function ListView() {
       if (searchQuery && !product.title.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-
-      // 2. Category Filter
-      if (selectedCategory && product.categoryId !== selectedCategory) {
-        return false;
-      }
-
-      // 3. Brand Filter
-      if (selectedBrand && product.brandId !== selectedBrand) {
-        return false;
-      }
-
       return true;
     });
-  }, [products, searchQuery, selectedCategory, selectedBrand]);
+  }, [products, searchQuery]);
 
   const handleBulkMove = async (onClose) => {
     if (!targetCategory) return toast.error("Veuillez sélectionner une catégorie cible");
@@ -193,7 +215,7 @@ export default function ListView() {
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
             <option value="">Toutes les catégories</option>
-            {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {renderCategoryOptions(categories)}
           </select>
 
           <select
