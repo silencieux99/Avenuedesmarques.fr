@@ -1,16 +1,14 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useProduct } from "@/lib/firestore/products/read";
-import { useUser } from "@/lib/firestore/user/read";
-import { updateCarts } from "@/lib/firestore/user/write";
-import { Button, CircularProgress } from "@nextui-org/react";
 import { Minus, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useCart } from "@/contexts/CartContext";
+import toast from "react-hot-toast";
+
 export default function Page() {
-  const { user } = useAuth();
-  const { data } = useUser({ uid: user?.uid });
+  const { cart, cartCount } = useCart();
 
   return (
     <main className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-background">
@@ -20,11 +18,11 @@ export default function Page() {
             Mon Panier
           </h1>
           <p className="text-gray-500 text-sm uppercase tracking-wide">
-            {data?.carts?.length > 0 ? `${data.carts.length} articles` : 'Votre panier est vide'}
+            {cartCount > 0 ? `${cartCount} articles` : 'Votre panier est vide'}
           </p>
         </div>
 
-        {(!data?.carts || data?.carts?.length === 0) ? (
+        {cartCount === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 bg-white rounded-xl shadow-sm border border-gray-100 p-10">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -45,7 +43,7 @@ export default function Page() {
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Cart Items */}
             <div className="flex-1 space-y-6">
-              {data?.carts?.map((item, key) => {
+              {cart?.map((item) => {
                 return <ProductItem item={item} key={item?.id} />;
               })}
             </div>
@@ -75,7 +73,6 @@ export default function Page() {
                 <div className="space-y-2 text-xs text-gray-400 text-center">
                   <p>Paiement 100% sécurisé</p>
                   <div className="flex justify-center gap-2 grayscale opacity-70">
-                    {/* Add payment icons here if available, or just text */}
                     <span>Visa</span> • <span>Mastercard</span> • <span>Paypal</span>
                   </div>
                 </div>
@@ -89,20 +86,18 @@ export default function Page() {
 }
 
 function ProductItem({ item }) {
-  const { user } = useAuth();
-  const { data } = useUser({ uid: user?.uid });
-
+  const { updateQuantity, removeFromCart } = useCart();
   const [isRemoving, setIsRemoving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: product } = useProduct({ productId: item?.id });
 
   const handleRemove = async () => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm("Êtes-vous sûr de vouloir retirer cet article ?")) return;
     setIsRemoving(true);
     try {
-      const newList = data?.carts?.filter((d) => d?.id != item?.id);
-      await updateCarts({ list: newList, uid: user?.uid });
+      await removeFromCart(item?.id);
+      toast.success("Produit retiré du panier");
     } catch (error) {
       toast.error(error?.message);
     }
@@ -110,19 +105,10 @@ function ProductItem({ item }) {
   };
 
   const handleUpdate = async (quantity) => {
+    if (quantity < 1) return;
     setIsUpdating(true);
     try {
-      const newList = data?.carts?.map((d) => {
-        if (d?.id === item?.id) {
-          return {
-            ...d,
-            quantity: parseInt(quantity),
-          };
-        } else {
-          return d;
-        }
-      });
-      await updateCarts({ list: newList, uid: user?.uid });
+      await updateQuantity(item?.id, quantity);
     } catch (error) {
       toast.error(error?.message);
     }

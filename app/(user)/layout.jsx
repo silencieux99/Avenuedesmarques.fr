@@ -24,8 +24,8 @@ function UserChecking({ children }) {
   const { user, isLoading } = useAuth();
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
 
-  // Allow guest checkout
-  const isCheckoutPage = pathname.includes('/checkout');
+  // Allow guest checkout and cart
+  const isGuestAllowedPage = pathname.includes('/checkout') || pathname.includes('/cart');
 
   if (isLoading) {
     return (
@@ -35,7 +35,7 @@ function UserChecking({ children }) {
     );
   }
 
-  if (!user && !isCheckoutPage) {
+  if (!user && !isGuestAllowedPage) {
     return (
       <div className="h-screen w-full flex flex-col gap-3 justify-center items-center">
         <h1 className="text-sm text-gray-600">Vous n'êtes pas connecté !</h1>

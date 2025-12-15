@@ -8,9 +8,7 @@ import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Loader2, Plus, Search } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUser } from "@/lib/firestore/user/read";
-import { updateCarts } from "@/lib/firestore/user/write";
+import { useCart } from '@/contexts/CartContext';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,15 +19,8 @@ export default function ProductsPage() {
     const [sortBy, setSortBy] = useState('newest');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [mounted, setMounted] = useState(false);
 
-    // Prevent SSR issues with useAuth
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    const { user } = mounted ? useAuth() : { user: null };
-    const { data: userData } = useUser({ uid: user?.uid });
+    const { addToCart } = useCart();
 
     // URL search params
     useEffect(() => {
@@ -44,25 +35,11 @@ export default function ProductsPage() {
     // Fetch data
     useEffect(() => {
         const productsRef = collection(db, 'products');
-        // We fetch all products (assuming reasonable count) to allow client-side filtering/sorting
-        // Avenuedesmarques products might not have 'status' field, checking write.jsx it didn't enforce it but AI creator sets it.
-        // We'll rely on what's available. If 'status' exists, we use it.
-        // Ideally we should verify schema. AI creator sets status="published".
-
-        // For safety, let's just fetch all likely items. If status is used, adding where clause is good.
-        // But standard products might not have it. Let's try without status first or check if errors.
-        // Actually, amiratshop had status. I'll include it if possible, but maybe minimal query is safer.
-        // I'll just order by timestampCreate (from write.jsx).
-
-        // const qProducts = query(productsRef, orderBy('timestampCreate', 'desc'));
-        // Wait, if I use orderBy, I need an index.
 
         const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
             const data = [];
             snapshot.forEach(doc => {
                 const d = doc.data();
-                // Filter out if not published?
-                // if (d.status === 'published' || !d.status) 
                 data.push({ id: doc.id, ...d });
             });
             // Sort by create time client side to avoid index requirement for now
@@ -72,7 +49,6 @@ export default function ProductsPage() {
         });
 
         const categoriesRef = collection(db, 'categories');
-        // Same for categories
         const unsubCategories = onSnapshot(categoriesRef, (snapshot) => {
             const data = [];
             snapshot.forEach(doc => {
@@ -122,26 +98,8 @@ export default function ProductsPage() {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!user?.uid) {
-            toast.error("Connectez-vous pour ajouter au panier");
-            // We could redirect but simple toast is fine for quick add
-            return;
-        }
-
         try {
-            const productId = product.id;
-            const isAdded = userData?.carts?.find((item) => item?.id === productId);
-            let newList;
-
-            if (isAdded) {
-                newList = userData?.carts?.map(item =>
-                    item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
-                );
-            } else {
-                newList = [...(userData?.carts ?? []), { id: productId, quantity: 1 }];
-            }
-
-            await updateCarts({ list: newList, uid: user?.uid });
+            await addToCart(product.id, 1);
             toast.success("Ajouté au panier");
         } catch (err) {
             toast.error(err.message);
