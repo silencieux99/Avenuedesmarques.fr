@@ -2,14 +2,14 @@ require('dotenv').config({ path: '.env.local' });
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, getDocs, doc, setDoc, Timestamp } = require('firebase/firestore');
 
-// Amirat Modestie Firebase Config (client SDK)
+// Amirat Modestie Firebase Config
 const amiratConfig = {
-    apiKey: "AIzaSyDlN8QkN_5-xvHFqYmxQJxJxJxJxJxJxJx", // À REMPLACER
+    apiKey: "AIzaSyDL1Qiz27OqtN3zUaIRYYwEFa4LnLvvo_w",
     authDomain: "amirat-modestie.firebaseapp.com",
     projectId: "amirat-modestie",
     storageBucket: "amirat-modestie.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:xxxxx"
+    messagingSenderId: "808581399266",
+    appId: "1:808581399266:web:5efc7ece1e755f445414bb"
 };
 
 // Avenue des Marques Firebase Config (from env)
@@ -93,7 +93,7 @@ async function migrateCategories() {
         };
 
         await setDoc(doc(avenueDb, 'categories', newId), newCategory);
-        console.log(`✅ ${newCategory.name} (child of ${newParentId})`);
+        console.log(`✅ ${newCategory.name} (child)`);
     }
 
     console.log(`✅ Migrated ${categories.length} categories\n`);
@@ -165,16 +165,14 @@ async function migrateProducts() {
         // Find or create brand
         let newBrandId = null;
         if (product.brand) {
-            // Search for existing brand
             const brandsSnapshot = await getDocs(collection(avenueDb, 'brands'));
-            const existingBrand = brandsSnapshot.docs.find(doc =>
-                doc.data().name?.toLowerCase() === product.brand?.toLowerCase()
+            const existingBrand = brandsSnapshot.docs.find(d =>
+                d.data().name?.toLowerCase() === product.brand?.toLowerCase()
             );
 
             if (existingBrand) {
                 newBrandId = existingBrand.id;
             } else {
-                // Create new brand
                 newBrandId = doc(collection(avenueDb, 'brands')).id;
                 await setDoc(doc(avenueDb, 'brands', newBrandId), {
                     id: newBrandId,
@@ -230,7 +228,6 @@ async function migrateProducts() {
 async function runMigration() {
     try {
         console.log('🚀 Starting migration from Amirat Modestie to Avenue des Marques\n');
-        console.log('⚠️  Make sure you have updated the Amirat Firebase config in this file!\n');
 
         await migrateCategories();
         await migrateBrands();
@@ -250,12 +247,11 @@ async function runMigration() {
 
 // Run if called directly
 if (require.main === module) {
-    console.log('\n⚠️  IMPORTANT: Before running, update the amiratConfig with real credentials!\n');
-    console.log('Press Ctrl+C to cancel, or wait 5 seconds to continue...\n');
+    console.log('\n🚀 Migration will start in 3 seconds...\n');
 
     setTimeout(() => {
         runMigration();
-    }, 5000);
+    }, 3000);
 }
 
 module.exports = { runMigration };

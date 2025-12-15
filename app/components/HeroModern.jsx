@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function HeroModern({ heroProducts }) {
-    // Use the first hero product or fallback
+    // Use the first hero product or fallback to a luxury image
     const mainProduct = heroProducts?.[0];
-    const heroImage = mainProduct?.featureImageURL || "/hero-fallback.jpg";
+    const heroImage = mainProduct?.featureImageURL || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop";
 
     return (
         <section className="relative h-[calc(90vh)] md:h-[calc(100vh-40px)] w-full overflow-hidden bg-neutral-900">
