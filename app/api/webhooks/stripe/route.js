@@ -23,12 +23,10 @@ export async function POST(request) {
             return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
         }
 
+        console.log(`Webhook received: ${event.type}`);
+
         // Handle the event
         switch (event.type) {
-            case 'checkout.session.completed':
-                await handleCheckoutSessionCompleted(event.data.object);
-                break;
-
             case 'payment_intent.succeeded':
                 await handlePaymentIntentSucceeded(event.data.object);
                 break;
@@ -48,146 +46,96 @@ export async function POST(request) {
     }
 }
 
-async function handleCheckoutSessionCompleted(session) {
+async function handlePaymentIntentSucceeded(paymentIntent) {
+    const orderId = paymentIntent.id;
+    console.log(`Payment succeeded for order: ${orderId}`);
+
     try {
-        const checkoutId = session.metadata.checkoutId;
-        const userId = session.metadata.userId;
-        const isGuest = session.metadata.isGuest === 'true';
+        const orderRef = adminDB.doc(`orders/${orderId}`);
+        const orderDoc = await orderRef.get();
 
-        console.log(`Processing checkout session: ${checkoutId}`);
+        if (orderDoc.exists) {
+            const orderData = orderDoc.data();
 
-        // Retrieve the checkout session from Firestore
-        let checkoutDoc;
-        if (isGuest) {
-            checkoutDoc = await adminDB.doc(`guest_orders/${checkoutId}`).get();
+            // Update order status to paid
+            await orderRef.update({
+                paymentStatus: 'paid',
+                status: 'confirmed',
+                updatedAt: admin.firestore.Timestamp.now(),
+                stripePaymentIntentId: paymentIntent.id,
+            });
+
+            console.log(`Order ${orderId} marked as paid`);
+
+            // Clear user's cart if not guest
+            const userId = orderData.userId;
+            if (userId && userId !== 'guest') {
+                try {
+                    const productIds = (orderData.line_items || [])
+                        .map(item => item?.price_data?.product_data?.metadata?.productId)
+                        .filter(Boolean);
+
+                    const userDoc = await adminDB.doc(`users/${userId}`).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        const newCart = (userData.carts || []).filter(
+                            cartItem => !productIds.includes(cartItem.id)
+                        );
+                        await adminDB.doc(`users/${userId}`).update({ carts: newCart });
+                        console.log(`Cart cleared for user ${userId}`);
+                    }
+                } catch (cartError) {
+                    console.error('Error clearing cart:', cartError);
+                }
+            }
+
+            // Update product stock and order counts
+            try {
+                const batch = adminDB.batch();
+                (orderData.line_items || []).forEach(item => {
+                    const productId = item?.price_data?.product_data?.metadata?.productId;
+                    if (productId) {
+                        const productRef = adminDB.doc(`products/${productId}`);
+                        batch.update(productRef, {
+                            orders: admin.firestore.FieldValue.increment(item.quantity || 1),
+                            stock: admin.firestore.FieldValue.increment(-(item.quantity || 1)),
+                        });
+                    }
+                });
+                await batch.commit();
+                console.log('Product stock updated');
+            } catch (stockError) {
+                console.error('Error updating stock:', stockError);
+            }
+
         } else {
-            const checkoutQuery = await adminDB
-                .collectionGroup('checkout_sessions')
-                .where('id', '==', checkoutId)
-                .limit(1)
-                .get();
-
-            if (!checkoutQuery.empty) {
-                checkoutDoc = checkoutQuery.docs[0];
-            }
+            console.log(`Order ${orderId} not found in Firestore`);
         }
-
-        if (!checkoutDoc || !checkoutDoc.exists) {
-            console.error(`Checkout session not found: ${checkoutId}`);
-            return;
-        }
-
-        const checkoutData = checkoutDoc.data();
-
-        // Create the order
-        const orderId = session.payment_intent || session.id;
-
-        await adminDB.doc(`orders/${orderId}`).set({
-            id: orderId,
-            checkoutId: checkoutId,
-            userId: isGuest ? null : userId,
-            isGuest: isGuest,
-            customerEmail: session.customer_email || session.customer_details?.email,
-            customerName: session.customer_details?.name,
-
-            // Payment info
-            paymentStatus: session.payment_status,
-            paymentMethod: 'card',
-            amountTotal: session.amount_total / 100, // Convert from cents
-            currency: session.currency,
-
-            // Line items
-            line_items: checkoutData.line_items || [],
-
-            // Address from metadata
-            address: checkoutData.metadata?.address ? JSON.parse(checkoutData.metadata.address) : null,
-
-            // Shipping address from Stripe
-            shippingAddress: session.shipping_details?.address || session.shipping?.address,
-            shippingName: session.shipping_details?.name || session.shipping?.name,
-
-            // Status
-            status: 'pending', // Order status (pending, processing, shipped, delivered, cancelled)
-            paymentStatus: 'paid',
-
-            // Timestamps
-            createdAt: admin.firestore.Timestamp.now(),
-            updatedAt: admin.firestore.Timestamp.now(),
-
-            // Stripe data
-            stripeSessionId: session.id,
-            stripePaymentIntentId: session.payment_intent,
-        });
-
-        // Clear user's cart if not guest
-        if (!isGuest && userId && userId !== 'guest') {
-            const productIds = (checkoutData.line_items || [])
-                .filter(item => item.price_data?.product_data?.metadata?.productId)
-                .map(item => item.price_data.product_data.metadata.productId);
-
-            const userDoc = await adminDB.doc(`users/${userId}`).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                const newCart = (userData.carts || []).filter(
-                    cartItem => !productIds.includes(cartItem.id)
-                );
-
-                await adminDB.doc(`users/${userId}`).update({
-                    carts: newCart
-                });
-            }
-        }
-
-        // Update product stock and order counts
-        const batch = adminDB.batch();
-        (checkoutData.line_items || []).forEach(item => {
-            const productId = item.price_data?.product_data?.metadata?.productId;
-            if (productId) {
-                const productRef = adminDB.doc(`products/${productId}`);
-                batch.update(productRef, {
-                    orders: admin.firestore.FieldValue.increment(item.quantity),
-                    stock: admin.firestore.FieldValue.increment(-item.quantity),
-                });
-            }
-        });
-        await batch.commit();
-
-        // Update checkout session status
-        await checkoutDoc.ref.update({
-            status: 'completed',
-            completedAt: admin.firestore.Timestamp.now(),
-        });
-
-        console.log(`Order created successfully: ${orderId}`);
     } catch (error) {
-        console.error('Error handling checkout session completed:', error);
+        console.error('Error handling payment succeeded:', error);
         throw error;
     }
 }
 
-async function handlePaymentIntentSucceeded(paymentIntent) {
-    console.log(`Payment succeeded: ${paymentIntent.id}`);
-
-    // Update order payment status if needed
-    const orderDoc = await adminDB.doc(`orders/${paymentIntent.id}`).get();
-    if (orderDoc.exists) {
-        await orderDoc.ref.update({
-            paymentStatus: 'paid',
-            updatedAt: admin.firestore.Timestamp.now(),
-        });
-    }
-}
-
 async function handlePaymentIntentFailed(paymentIntent) {
-    console.log(`Payment failed: ${paymentIntent.id}`);
+    const orderId = paymentIntent.id;
+    console.log(`Payment failed for order: ${orderId}`);
 
-    // Update order payment status
-    const orderDoc = await adminDB.doc(`orders/${paymentIntent.id}`).get();
-    if (orderDoc.exists) {
-        await orderDoc.ref.update({
-            paymentStatus: 'failed',
-            status: 'cancelled',
-            updatedAt: admin.firestore.Timestamp.now(),
-        });
+    try {
+        const orderRef = adminDB.doc(`orders/${orderId}`);
+        const orderDoc = await orderRef.get();
+
+        if (orderDoc.exists) {
+            await orderRef.update({
+                paymentStatus: 'failed',
+                status: 'cancelled',
+                updatedAt: admin.firestore.Timestamp.now(),
+                failureMessage: paymentIntent.last_payment_error?.message || 'Payment failed',
+            });
+            console.log(`Order ${orderId} marked as failed`);
+        }
+    } catch (error) {
+        console.error('Error handling payment failed:', error);
+        throw error;
     }
 }
