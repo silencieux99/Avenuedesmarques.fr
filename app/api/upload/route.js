@@ -16,14 +16,24 @@ export async function POST(request) {
         // Get the file from the request body
         const file = await request.blob();
 
+        // Check for token
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            console.error("Missing BLOB_READ_WRITE_TOKEN environment variable");
+            return NextResponse.json(
+                { error: 'Server configuration error: Missing Blob Token' },
+                { status: 500 }
+            );
+        }
+
         // Upload to Vercel Blob
         const blob = await put(filename, file, {
             access: 'public',
+            addRandomSuffix: true,
         });
 
         return NextResponse.json(blob);
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error details:', error);
         return NextResponse.json(
             { error: error.message || 'Upload failed' },
             { status: 500 }

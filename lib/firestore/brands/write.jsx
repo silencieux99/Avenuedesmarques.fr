@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import {
   collection,
   deleteDoc,
@@ -7,6 +7,7 @@ import {
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const uploadImage = async (file) => {
   if (!file) return null;
@@ -14,7 +15,10 @@ const uploadImage = async (file) => {
     method: 'POST',
     body: file,
   });
-  if (!response.ok) throw new Error("Upload failed");
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Upload failed: ${response.status} ${errorText}`);
+  }
   const blob = await response.json();
   return blob.url;
 };
