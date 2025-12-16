@@ -39,13 +39,14 @@ export const createCheckoutCODAndGetId = async ({ uid, products, address }) => {
         currency: "eur",
         product_data: {
           name: item?.product?.title ?? "",
-          description: item?.product?.shortDescription ?? "",
+          description: (item?.product?.shortDescription ?? "") + (item?.size ? ` - Taille: ${item?.size}` : ""),
           images: [
             item?.product?.featureImageURL ??
             `${process.env.NEXT_PUBLIC_DOMAIN}/logo.png`,
           ],
           metadata: {
             productId: item?.id,
+            size: item?.size || null,
           },
         },
         unit_amount: item?.product?.salePrice * 100,

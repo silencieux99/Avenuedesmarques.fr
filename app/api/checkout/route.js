@@ -18,10 +18,11 @@ export async function POST(request) {
                 currency: "eur",
                 product_data: {
                     name: item?.product?.title || "Produit",
-                    description: item?.product?.shortDescription || "",
+                    description: (item?.product?.shortDescription || "") + (item?.size ? ` - Taille: ${item?.size}` : ""),
                     images: item?.product?.featureImageURL ? [item?.product?.featureImageURL] : [],
                     metadata: {
                         productId: item?.product?.id || item?.id,
+                        size: item?.size || null,
                     },
                 },
                 unit_amount: Math.round((item?.product?.salePrice || item?.product?.price || 0) * 100),

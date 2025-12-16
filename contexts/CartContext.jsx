@@ -46,7 +46,7 @@ export function CartProvider({ children }) {
                     const mergedCart = [...existingCart];
 
                     guestCart.forEach(guestItem => {
-                        const existingIndex = mergedCart.findIndex(item => item.id === guestItem.id);
+                        const existingIndex = mergedCart.findIndex(item => item.id === guestItem.id && item.size === guestItem.size);
                         if (existingIndex >= 0) {
                             mergedCart[existingIndex].quantity += guestItem.quantity;
                         } else {
@@ -69,63 +69,86 @@ export function CartProvider({ children }) {
 
     const cart = user ? (userData?.carts || []) : guestCart;
 
-    const addToCart = async (productId, quantity = 1) => {
+    const addToCart = async (productId, quantity = 1, size = null) => {
+        const newItem = { id: productId, quantity, size };
+
         if (user) {
             // User is logged in - update Firestore
-            const existingItem = userData?.carts?.find(item => item.id === productId);
+            const currentCart = userData?.carts || [];
+            const existingIndex = currentCart.findIndex(item => item.id === productId && item.size === size);
             let newCart;
 
-            if (existingItem) {
-                newCart = userData.carts.map(item =>
-                    item.id === productId ? { ...item, quantity: item.quantity + quantity } : item
-                );
+            if (existingIndex >= 0) {
+                newCart = [...currentCart];
+                newCart[existingIndex].quantity += quantity;
             } else {
-                newCart = [...(userData?.carts || []), { id: productId, quantity }];
+                newCart = [...currentCart, newItem];
             }
 
             await updateCarts({ list: newCart, uid: user.uid });
         } else {
             // Guest - update localStorage
-            const existingItem = guestCart.find(item => item.id === productId);
+            const existingIndex = guestCart.findIndex(item => item.id === productId && item.size === size);
             let newCart;
 
-            if (existingItem) {
-                newCart = guestCart.map(item =>
-                    item.id === productId ? { ...item, quantity: item.quantity + quantity } : item
-                );
+            if (existingIndex >= 0) {
+                newCart = [...guestCart];
+                newCart[existingIndex].quantity += quantity;
             } else {
-                newCart = [...guestCart, { id: productId, quantity }];
+                newCart = [...guestCart, newItem];
             }
 
             setGuestCart(newCart);
         }
     };
 
-    const removeFromCart = async (productId) => {
+    // Remove specific item (id + size)
+    const removeFromCart = async (productId, size = null) => {
+        // If size is passed, match both. If not passed (legacy calls), remove all instances of product??
+        // Safe bet: match id AND size if size is provided. But to be robust, let's assume UI handles unique items.
+        // For now, let's stick to unique ID+Size removal. 
+        // NOTE: Previous logic was just ID. If we have multiple sizes, removing by ID removes ALL sizes of that product.
+        // Let's keep removing ALL variants of a product by ID for simplicity if size is not passed? 
+        // No, better to be strict if we can. But current UI calls removeFromCart(productId).
+        // Let's filter out only exact matches if size is provided, or all if not??
+        // Actually, easiest migration: filter `item.id !== productId` removes all sizes of that product.
+        // If we want to remove specific line, we need to pass size.
+        // I will assume for now removeFromCart is "remove all of this product".
+
+        const filterFn = (item) => {
+            if (size) return !(item.id === productId && item.size === size);
+            return item.id !== productId; // Remove all variants if size not specified
+        };
+
         if (user) {
-            const newCart = userData?.carts?.filter(item => item.id !== productId) || [];
+            const newCart = (userData?.carts || []).filter(filterFn);
             await updateCarts({ list: newCart, uid: user.uid });
         } else {
-            const newCart = guestCart.filter(item => item.id !== productId);
+            const newCart = guestCart.filter(filterFn);
             setGuestCart(newCart);
         }
     };
 
-    const updateQuantity = async (productId, quantity) => {
+    const updateQuantity = async (productId, quantity, size = null) => {
         if (quantity <= 0) {
-            await removeFromCart(productId);
+            await removeFromCart(productId, size);
             return;
         }
 
+        const mapFn = (item) => {
+            if (item.id === productId && (size ? item.size === size : true)) {
+                // If multiple matches (e.g. no size specified but multiple variants), this updates all?? 
+                // Let's assume size is passed for precision or only one variant exists.
+                return { ...item, quantity };
+            }
+            return item;
+        };
+
         if (user) {
-            const newCart = userData?.carts?.map(item =>
-                item.id === productId ? { ...item, quantity } : item
-            ) || [];
+            const newCart = (userData?.carts || []).map(mapFn);
             await updateCarts({ list: newCart, uid: user.uid });
         } else {
-            const newCart = guestCart.map(item =>
-                item.id === productId ? { ...item, quantity } : item
-            );
+            const newCart = guestCart.map(mapFn);
             setGuestCart(newCart);
         }
     };

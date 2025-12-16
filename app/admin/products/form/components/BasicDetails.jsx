@@ -188,6 +188,32 @@ export default function BasicDetails({ data, handleData }) {
       </div>
 
       <div className="flex flex-col gap-1">
+        <label className="text-gray-500 text-xs">
+          Tailles disponibles (Variantes)
+        </label>
+        <div className="flex flex-wrap gap-3 mt-1">
+          {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
+            <label key={size} className="flex items-center gap-2 cursor-pointer border px-3 py-1 rounded-md hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={data?.sizes?.includes(size) ?? false}
+                onChange={(e) => {
+                  const currentSizes = data?.sizes ?? [];
+                  if (e.target.checked) {
+                    handleData("sizes", [...currentSizes, size]);
+                  } else {
+                    handleData("sizes", currentSizes.filter((s) => s !== size));
+                  }
+                }}
+                className="rounded text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium">{size}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
         <label
           className="text-gray-500 text-xs"
           htmlFor="product-is-featured-product"

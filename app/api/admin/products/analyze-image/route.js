@@ -46,6 +46,7 @@ FORMAT DE RÉPONSE JSON STRICT :
   "couleur": "Couleur principale précise (ex: Bleu Marine, Bordeaux, Écru)",
   "matiere": "Matière principale identifiée ou supposée avec haute probabilité",
   "etat": "Neuf avec étiquette",
+  "sizes": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"], 
   "tags": ["marque", "type", "couleur", "matière", "style", "tendance", "mots-clés SEO"]
 }
 

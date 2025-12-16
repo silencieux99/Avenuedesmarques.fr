@@ -234,7 +234,16 @@ export default function Checkout({ productList }) {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{item?.product?.title}</h3>
-                  <p className="text-xs text-gray-500 line-clamp-1">{item?.product?.shortDescription}</p>
+                  <div className="flex flex-col">
+                    {item?.size && (
+                      <span className="text-xs text-gray-500 font-medium bg-gray-200 px-1.5 py-0.5 rounded w-fit">
+                        Taille: {item.size}
+                      </span>
+                    )}
+                    {!item?.size && (
+                      <p className="text-xs text-gray-500 line-clamp-1 text-ellipsis">{item?.product?.shortDescription}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="text-sm font-medium text-gray-900">{(item?.product?.salePrice * item?.quantity).toFixed(2)} €</div>
               </div>
