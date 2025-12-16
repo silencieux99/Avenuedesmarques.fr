@@ -109,7 +109,7 @@ export default function Header() {
 
       {/* Main Header */}
       <nav
-        className={`fixed top-8 inset-x-0 z-50 transition-all duration-500 ${isScrolled
+        className={`fixed top-8 inset-x-0 z-[61] transition-all duration-500 ${isScrolled
           ? 'bg-white shadow-lg'
           : 'bg-white/95 backdrop-blur-xl'
           }`}
@@ -122,7 +122,7 @@ export default function Header() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label={isMobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-colors z-[71]"
+                className="p-2 hover:bg-gray-50 rounded-lg transition-colors relative z-[71] cursor-pointer"
               >
                 {isMobileMenuOpen ? (
                   <X className="w-6 h-6" strokeWidth={1.5} />
