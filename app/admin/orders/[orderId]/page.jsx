@@ -65,9 +65,7 @@ export default function Page() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/admin/orders">
-            <Button isIconOnly variant="flat" size="sm"><ArrowLeft size={16} /></Button>
-          </Link>
+          <Button isIconOnly variant="flat" size="sm" onPress={() => window.location.href = '/admin/orders'}><ArrowLeft size={16} /></Button>
           <div>
             <h1 className="text-2xl font-bold">Détail de la commande</h1>
             <div className="flex items-center gap-2 mt-1">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, Timestamp, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, collection } from 'firebase/firestore';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -24,31 +24,33 @@ export async function POST(request) {
         let appliedPromoCode = null;
 
         // --- Promo Code Logic ---
+        // --- Promo Code Logic ---
         if (address?.promoCode) {
             const code = address.promoCode.toString().toUpperCase().trim();
-            if (code === 'WELCOME10') {
-                discountAmount = subTotal * 0.10;
-                appliedPromoCode = 'WELCOME10';
-            } else if (code === 'AVENUE20') {
-                discountAmount = subTotal * 0.20;
-                appliedPromoCode = 'AVENUE20';
-            } else if (code === 'VIP30') {
-                discountAmount = subTotal * 0.30;
-                appliedPromoCode = 'VIP30';
-            } else if (code === 'FREESHIPPING') {
-                discountAmount = Math.min(shippingCost, subTotal); // Just covers shipping technically, but usually we just set shipping to 0. 
-                // However, let's keep it simple: free shipping means shipping cost becomes 0.
-                if (shippingCost > 0) {
-                    // We consider this a "discount" equivalent to the shipping cost if we want to track it, 
-                    // or just reset shipping cost. Let's reset shipping cost.
-                    discountAmount = shippingCost;
-                    shippingCost = 0;
-                    appliedPromoCode = 'FREESHIPPING';
+            const couponSnap = await getDoc(doc(db, "coupons", code));
+
+            if (couponSnap.exists()) {
+                const coupon = couponSnap.data();
+
+                if (coupon.isActive) {
+                    if (coupon.type === "percent") {
+                        discountAmount = subTotal * (coupon.value / 100);
+                    } else if (coupon.type === "fixed") {
+                        discountAmount = coupon.value;
+                    }
+                    appliedPromoCode = code;
                 }
-            } else if (code === 'TEST99') {
-                // For testing purposes: 99% discount
-                discountAmount = subTotal * 0.99;
-                appliedPromoCode = 'TEST99';
+            } else {
+                // Fallback for system codes if needed, or just strict database only.
+                // Let's keep FREESHIPPING logic separate if you want, or migrate it to DB.
+                // Migrating FREESHIPPING logic to DB is cleaner, but keeping hardcode for now if DB miss.
+                if (code === 'FREESHIPPING') {
+                    if (shippingCost > 0) {
+                        discountAmount = shippingCost;
+                        shippingCost = 0;
+                        appliedPromoCode = 'FREESHIPPING';
+                    }
+                }
             }
         }
 

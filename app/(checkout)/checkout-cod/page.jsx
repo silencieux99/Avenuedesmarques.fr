@@ -34,6 +34,7 @@ const processOrder = async ({ checkout }) => {
     id: checkout?.id,
     paymentMode: "cod",
     timestampCreate: admin.firestore.Timestamp.now(),
+    createdAt: admin.firestore.Timestamp.now(),
   });
 
   const productList = checkout?.line_items?.map((item) => {

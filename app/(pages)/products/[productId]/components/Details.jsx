@@ -63,7 +63,7 @@ export default function Details({ product }) {
             </AuthContextProvider>
 
             <p className="text-[10px] text-center text-gray-400 uppercase tracking-widest mt-2">
-              Livraison gratuite & Retours sous 30 jours
+              Retours sous 30 jours
             </p>
           </div>
         )}

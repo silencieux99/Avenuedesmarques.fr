@@ -105,6 +105,7 @@ export default function Form() {
             name="brand-image"
             type="file"
             className="border px-4 py-2 rounded-lg w-full"
+            aria-label="Brand image upload"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -121,6 +122,7 @@ export default function Form() {
               handleData("name", e.target.value);
             }}
             className="border px-4 py-2 rounded-lg w-full focus:outline-none"
+            aria-label="Brand name input"
           />
         </div>
         <Button isLoading={isLoading} isDisabled={isLoading} type="submit">

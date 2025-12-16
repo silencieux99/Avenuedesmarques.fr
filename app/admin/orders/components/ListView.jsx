@@ -132,7 +132,11 @@ export default function ListView() {
                   {item?.orderNumber || item?.id?.slice(0, 12) + '...'}
                 </span>
                 <span className="block text-[10px] text-gray-400 mt-1">
-                  {item?.timestampCreate ? new Date(item.timestampCreate.seconds * 1000).toLocaleDateString() : "Date inconnue"}
+                  {item?.timestampCreate
+                    ? new Date(item.timestampCreate.seconds * 1000).toLocaleDateString()
+                    : item?.createdAt
+                      ? new Date(item.createdAt.seconds * 1000).toLocaleDateString()
+                      : "Date inconnue"}
                 </span>
               </TableCell>
               <TableCell>

@@ -74,8 +74,7 @@ export function useAllOrders({ pageLimit, lastSnapDoc }) {
       const ref = collection(db, path);
       let q = query(
         ref,
-        limit(pageLimit ?? 10),
-        orderBy("timestampCreate", "desc")
+        limit(pageLimit ?? 10)
       );
 
       if (lastSnapDoc) {

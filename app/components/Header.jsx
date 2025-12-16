@@ -103,7 +103,7 @@ export default function Header() {
       {/* Top Banner */}
       <div className="fixed top-0 inset-x-0 z-[60] bg-black text-white py-2 text-center">
         <p className="text-[9px] md:text-xs tracking-widest uppercase font-light px-4">
-          Livraison gratuite dès 150€ • Retours 30j
+          Nouveautés chaque semaine • Retours 30j
         </p>
       </div>
 

@@ -31,4 +31,4 @@ export async function POST(request) {
     }
 }
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
