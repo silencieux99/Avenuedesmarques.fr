@@ -26,6 +26,7 @@ export default function AIProductCreator() {
     const [selectedCategoryId, setSelectedCategoryId] = useState("");
     const [selectedBrandId, setSelectedBrandId] = useState("");
     const [shortDescription, setShortDescription] = useState("");
+    const [selectedSizes, setSelectedSizes] = useState([]);
 
     const { data: categories } = useCategories();
     const { data: brands } = useBrands();
@@ -37,6 +38,7 @@ export default function AIProductCreator() {
     useEffect(() => {
         if (analyzedData) {
             setAnalyzedData(null);
+            setSelectedSizes([]);
         }
     }, [mode, mannequin]);
 
@@ -45,6 +47,7 @@ export default function AIProductCreator() {
         if (files.length > 0) {
             setImages(prev => [...prev, ...files]);
             setAnalyzedData(null);
+            setSelectedSizes([]);
 
             files.forEach(file => {
                 const reader = new FileReader();
@@ -113,6 +116,10 @@ export default function AIProductCreator() {
             const analyzed = await analyzeResponse.json();
             setAnalyzedData(analyzed);
 
+            if (analyzed.sizes) {
+                setSelectedSizes(analyzed.sizes);
+            }
+
             // Pre-fill fields
             setShortDescription(analyzed.description.substring(0, 150) + "...");
 
@@ -144,6 +151,7 @@ export default function AIProductCreator() {
                 price: numPrice,
                 salePrice: numSalePrice,
                 isFeatured: false,
+                sizes: selectedSizes,
                 // Add extra fields as needed if schema supports them, or append to description
             };
 
@@ -189,8 +197,8 @@ export default function AIProductCreator() {
                         <button
                             onClick={() => setMode('vetement')}
                             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${mode === 'vetement'
-                                    ? 'bg-purple-600 text-white shadow-lg'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             👗 Vêtement
@@ -198,8 +206,8 @@ export default function AIProductCreator() {
                         <button
                             onClick={() => setMode('luxe')}
                             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${mode === 'luxe'
-                                    ? 'bg-purple-600 text-white shadow-lg'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             💎 Luxe
@@ -215,8 +223,8 @@ export default function AIProductCreator() {
                             <button
                                 onClick={() => setMannequin('assia')}
                                 className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${mannequin === 'assia'
-                                        ? 'bg-pink-500 text-white shadow-lg'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-pink-500 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 <div className="text-center">
@@ -227,8 +235,8 @@ export default function AIProductCreator() {
                             <button
                                 onClick={() => setMannequin('sonia')}
                                 className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${mannequin === 'sonia'
-                                        ? 'bg-pink-500 text-white shadow-lg'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-pink-500 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 <div className="text-center">
@@ -272,8 +280,8 @@ export default function AIProductCreator() {
                                         <div
                                             onClick={() => setPrimaryImageIndex(index)}
                                             className={`relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 cursor-pointer transition-all ${index === primaryImageIndex
-                                                    ? 'ring-4 ring-blue-500 shadow-lg'
-                                                    : 'hover:ring-2 hover:ring-blue-300'
+                                                ? 'ring-4 ring-blue-500 shadow-lg'
+                                                : 'hover:ring-2 hover:ring-blue-300'
                                                 }`}
                                         >
                                             <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
@@ -458,6 +466,31 @@ export default function AIProductCreator() {
                                                 onChange={(e) => setStock(e.target.value)}
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                                             />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tailles disponibles (Variantes)
+                                            </label>
+                                            <div className="flex flex-wrap gap-3 mt-1">
+                                                {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
+                                                    <label key={size} className="flex items-center gap-2 cursor-pointer border px-3 py-1 rounded-md hover:bg-gray-50">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedSizes.includes(size)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedSizes(prev => [...prev, size]);
+                                                                } else {
+                                                                    setSelectedSizes(prev => prev.filter(s => s !== size));
+                                                                }
+                                                            }}
+                                                            className="rounded text-purple-600 focus:ring-purple-500"
+                                                        />
+                                                        <span className="text-sm font-medium">{size}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
 

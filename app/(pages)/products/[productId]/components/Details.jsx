@@ -119,32 +119,33 @@ export default function Details({ product }) {
                 </Button>
               </div>
             </div>
-        )}
           </div>
+        )}
+      </div>
 
       {/* Detailed Description Accordion-like style */}
-        <div className="mt-8 pt-8 border-t border-gray-100">
-          <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <span className="w-8 h-[1px] bg-gray-900"></span>
-            Détails & Description
-          </h3>
-          <div
-            className="text-gray-600 text-sm font-light leading-relaxed space-y-4 prose prose-sm max-w-none prose-p:my-2 prose-headings:font-serif prose-headings:font-normal"
-            dangerouslySetInnerHTML={{ __html: product?.description ?? "" }}
-          ></div>
-        </div>
+      <div className="mt-8 pt-8 border-t border-gray-100">
+        <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <span className="w-8 h-[1px] bg-gray-900"></span>
+          Détails & Description
+        </h3>
+        <div
+          className="text-gray-600 text-sm font-light leading-relaxed space-y-4 prose prose-sm max-w-none prose-p:my-2 prose-headings:font-serif prose-headings:font-normal"
+          dangerouslySetInnerHTML={{ __html: product?.description ?? "" }}
+        ></div>
       </div>
-      );
+    </div>
+  );
 }
 
-      async function Brand({brandId}) {
-  const brand = await getBrand({id: brandId });
-      if (!brand) return null;
-      return (
-      <Link href={`/search?brandId=${brandId}`}>
-        <h4 className="text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-accent transition-colors mb-2">
-          {brand?.name}
-        </h4>
-      </Link>
-      );
+async function Brand({ brandId }) {
+  const brand = await getBrand({ id: brandId });
+  if (!brand) return null;
+  return (
+    <Link href={`/search?brandId=${brandId}`}>
+      <h4 className="text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-accent transition-colors mb-2">
+        {brand?.name}
+      </h4>
+    </Link>
+  );
 }
