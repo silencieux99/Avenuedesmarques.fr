@@ -14,6 +14,15 @@ const getOpenAIClient = () => {
 export async function POST(request) {
     try {
         const openai = getOpenAIClient();
+        const { imageUrl } = await request.json();
+
+        if (!imageUrl) {
+            return NextResponse.json(
+                { error: 'URL de l\'image requise' },
+                { status: 400 }
+            );
+        }
+
         // Construire le prompt pour une analyse experte et SEO
         const promptText = `Tu es un expert mondial en mode, luxe et prêt-à-porter, spécialisé dans l'identification précise de vêtements de marque et l'optimisation SEO pour le e-commerce.
 
