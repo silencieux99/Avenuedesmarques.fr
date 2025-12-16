@@ -1,6 +1,6 @@
 "use client";
 
-import { useAllOrders } from "@/lib/firestore/orders/read";
+import { useAllOrders, searchOrders } from "@/lib/firestore/orders/read";
 import { useUser } from "@/lib/firestore/user/read";
 import {
   Avatar,
@@ -16,22 +16,27 @@ import {
   TableRow,
   Tooltip,
   User,
+  Input,
 } from "@nextui-org/react";
-import { EyeIcon } from "lucide-react";
+import { EyeIcon, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ListView() {
   const [pageLimit, setPageLimit] = useState(10);
   const [lastSnapDocList, setLastSnapDocList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     setLastSnapDocList([]);
   }, [pageLimit]);
 
   const {
-    data: orders,
+    data: ordersList,
     error,
     isLoading,
     lastSnapDoc,
@@ -42,6 +47,28 @@ export default function ListView() {
         ? null
         : lastSnapDocList[lastSnapDocList?.length - 1],
   });
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const results = await searchOrders(searchQuery);
+      setSearchResults(results);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur de recherche");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSearchResults(null);
+  };
 
   const handleNextPage = () => {
     let newStack = [...lastSnapDocList];
@@ -66,8 +93,28 @@ export default function ListView() {
     return <div>{error}</div>;
   }
 
+  const displayOrders = searchResults || ordersList;
+
   return (
     <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl w-full">
+      <div className="bg-white p-4 rounded-xl border flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 w-full md:w-auto">
+          <Input
+            placeholder="Rechercher (Email, N° Commande, ID)"
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            className="w-full md:w-80"
+            startContent={<Search size={16} />}
+            isClearable
+            onClear={handleClearSearch}
+          />
+          <Button color="primary" onClick={handleSearch} isLoading={isSearching}>
+            Chercher
+          </Button>
+        </div>
+      </div>
+
       <Table aria-label="Orders table">
         <TableHeader>
           <TableColumn>N° COMMANDE</TableColumn>
@@ -78,11 +125,14 @@ export default function ListView() {
           <TableColumn>ACTIONS</TableColumn>
         </TableHeader>
         <TableBody emptyContent={"Aucune commande trouvée."}>
-          {orders?.map((item) => (
+          {displayOrders?.map((item) => (
             <TableRow key={item?.id}>
               <TableCell>
                 <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
                   {item?.orderNumber || item?.id?.slice(0, 12) + '...'}
+                </span>
+                <span className="block text-[10px] text-gray-400 mt-1">
+                  {item?.timestampCreate ? new Date(item.timestampCreate.seconds * 1000).toLocaleDateString() : "Date inconnue"}
                 </span>
               </TableCell>
               <TableCell>
@@ -127,34 +177,36 @@ export default function ListView() {
         </TableBody>
       </Table>
 
-      <div className="flex justify-between items-center px-4">
-        <Button
-          isDisabled={isLoading || lastSnapDocList?.length === 0}
-          onClick={handlePrePage}
-          size="sm"
-          variant="flat"
-        >
-          Précédent
-        </Button>
-        <select
-          value={pageLimit}
-          onChange={(e) => setPageLimit(e.target.value)}
-          className="px-3 py-1 rounded-lg border text-sm"
-        >
-          <option value={5}>5 par page</option>
-          <option value={10}>10 par page</option>
-          <option value={20}>20 par page</option>
-          <option value={50}>50 par page</option>
-        </select>
-        <Button
-          isDisabled={isLoading || orders?.length === 0}
-          onClick={handleNextPage}
-          size="sm"
-          variant="flat"
-        >
-          Suivant
-        </Button>
-      </div>
+      {!searchResults && (
+        <div className="flex justify-between items-center px-4">
+          <Button
+            isDisabled={isLoading || lastSnapDocList?.length === 0}
+            onClick={handlePrePage}
+            size="sm"
+            variant="flat"
+          >
+            Précédent
+          </Button>
+          <select
+            value={pageLimit}
+            onChange={(e) => setPageLimit(e.target.value)}
+            className="px-3 py-1 rounded-lg border text-sm"
+          >
+            <option value={5}>5 par page</option>
+            <option value={10}>10 par page</option>
+            <option value={20}>20 par page</option>
+            <option value={50}>50 par page</option>
+          </select>
+          <Button
+            isDisabled={isLoading || ordersList?.length === 0}
+            onClick={handleNextPage}
+            size="sm"
+            variant="flat"
+          >
+            Suivant
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

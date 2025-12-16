@@ -4,6 +4,8 @@ import { db } from "@/lib/firebase";
 import {
   collection,
   doc,
+  getDoc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -106,3 +108,35 @@ export function useAllOrders({ pageLimit, lastSnapDoc }) {
     isLoading: data === undefined,
   };
 }
+export const searchOrders = async (queryText) => {
+  if (!queryText) return [];
+  const qText = queryText.trim();
+  const ref = collection(db, "orders");
+
+  // Try multiple strategies
+  // 1. Exact ID match
+  const docRef = doc(db, "orders", qText);
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return [docSnap.data()];
+    }
+  } catch (e) { }
+
+  // 2. Order Number match
+  const qOrderNum = query(ref, where("orderNumber", "==", qText));
+  const snapOrderNum = await getDocs(qOrderNum);
+  if (!snapOrderNum.empty) {
+    return snapOrderNum.docs.map((d) => d.data());
+  }
+
+  // 3. Email match (case insensitive if possible, but Firestore is exact. We'll try exact lower/original)
+  // Trying lowercase
+  const qEmail = query(ref, where("customerEmail", "==", qText.toLowerCase()));
+  const snapEmail = await getDocs(qEmail);
+  if (!snapEmail.empty) {
+    return snapEmail.docs.map((d) => d.data());
+  }
+
+  return [];
+};
