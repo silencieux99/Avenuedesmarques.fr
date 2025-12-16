@@ -31,8 +31,8 @@ export default function ProductClientPage({ product }) {
 
     // Selection State
     const [quantity, setQuantity] = useState(1);
+    const [selectedSize, setSelectedSize] = useState(null);
     const [selectedOptions, setSelectedOptions] = useState({});
-    // We can add variant logic later if needed. For now assuming simple product.
 
     const isSoldOut = (product?.stock ?? 0) <= 0;
     const currentPrice = product?.price;
@@ -41,8 +41,13 @@ export default function ProductClientPage({ product }) {
     const isAddedToCart = cart?.find((item) => item?.id === product?.id);
 
     const handleAddToCart = async () => {
+        if (product?.sizes?.length > 0 && !selectedSize) {
+            toast.error("Veuillez sélectionner une taille");
+            return;
+        }
+
         try {
-            await addToCartContext(product.id, quantity);
+            await addToCartContext(product.id, quantity, selectedSize);
 
             toast.custom((t) => (
                 <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-black text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4`}>
@@ -51,7 +56,9 @@ export default function ProductClientPage({ product }) {
                     </div>
                     <div>
                         <p className="font-bold text-sm">Ajouté au panier !</p>
-                        <p className="text-xs text-neutral-300">{product.title}</p>
+                        <p className="text-xs text-neutral-300">
+                            {product.title} {selectedSize ? `(Taille: ${selectedSize})` : ''}
+                        </p>
                     </div>
                 </div>
             ));
@@ -114,10 +121,6 @@ export default function ProductClientPage({ product }) {
                         <div className="mb-8">
                             {product.brandId && (
                                 <span className="text-xs font-bold tracking-widest uppercase text-accent mb-2 block">
-                                    {/* We don't have brand name here easily unless we fetch it or pass it. 
-                      For now, ignore or display generic. 
-                      Actually, Product object might not have brand name populated, only ID.
-                   */}
                                     MARQUE
                                 </span>
                             )}
@@ -128,7 +131,6 @@ export default function ProductClientPage({ product }) {
                                 <div className="flex text-accent">
                                     {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
                                 </div>
-                                {/* <span className="border-b border-neutral-300 pb-px">Lire les avis (24)</span> */}
                             </div>
                         </div>
 
@@ -143,6 +145,32 @@ export default function ProductClientPage({ product }) {
 
                         {/* Actions */}
                         <div className="border-t border-neutral-100 pt-8 mt-8 space-y-4">
+
+                            {/* Size Selection */}
+                            {product?.sizes?.length > 0 && (
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="text-sm font-medium uppercase tracking-wide text-neutral-500">Taille</span>
+                                        <button className="text-xs text-neutral-400 underline hover:text-neutral-900">Guide des tailles</button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {product.sizes.map((size) => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                className={`
+                                                    min-w-[3rem] h-10 px-3 flex items-center justify-center text-sm font-medium border rounded transition-all
+                                                    ${selectedSize === size
+                                                        ? 'border-black bg-black text-white'
+                                                        : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'}
+                                                `}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Quantity */}
                             <div className="flex items-center gap-4 mb-4">
