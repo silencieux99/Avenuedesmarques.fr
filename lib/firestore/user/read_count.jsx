@@ -17,8 +17,15 @@ export const getUsersCount = async () => {
 };
 
 export function useUsersCount() {
-  const { data, error, isLoading } = useSWR("users_count", (key) =>
-    getUsersCount()
+  const { data, error, isLoading } = useSWR(
+    "users_count",
+    (key) => getUsersCount(),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300000, // 5 minutes
+      shouldRetryOnError: false,
+    }
   );
   if (error) {
     console.log(error?.message);
