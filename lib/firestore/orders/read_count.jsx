@@ -13,31 +13,26 @@ import {
 import useSWR from "swr";
 
 const GLOBAL_CACHE = {};
-let LAST_ERROR_TIMESTAMP = 0;
-const ERROR_COOLDOWN_MS = 60000; // 1 minute cooldown after error
+import { checkCircuitBreaker, tripCircuitBreaker } from "@/lib/circuit_breaker";
 
 export const getOrdersCounts = async ({ date }) => {
-  // Circuit breaker check
-  if (Date.now() - LAST_ERROR_TIMESTAMP < ERROR_COOLDOWN_MS) {
-    throw new Error("Cooling down after quota limit");
-  }
-
-  const ref = collection(db, `orders`);
-  let q = query(ref);
-
-  if (date) {
-    const fromDate = new Date(date);
-    fromDate.setHours(0, 0, 0, 0);
-    const toDate = new Date(date);
-    toDate.setHours(24, 0, 0, 0);
-    q = query(
-      q,
-      where("timestampCreate", ">=", Timestamp.fromDate(fromDate)),
-      where("timestampCreate", "<=", Timestamp.fromDate(toDate))
-    );
-  }
-
   try {
+    checkCircuitBreaker();
+    const ref = collection(db, `orders`);
+    let q = query(ref);
+
+    if (date) {
+      const fromDate = new Date(date);
+      fromDate.setHours(0, 0, 0, 0);
+      const toDate = new Date(date);
+      toDate.setHours(24, 0, 0, 0);
+      q = query(
+        q,
+        where("timestampCreate", ">=", Timestamp.fromDate(fromDate)),
+        where("timestampCreate", "<=", Timestamp.fromDate(toDate))
+      );
+    }
+
     const data = await getAggregateFromServer(q, {
       totalRevenue: sum("payment.amount"),
       totalOrders: count(),
@@ -50,16 +45,16 @@ export const getOrdersCounts = async ({ date }) => {
     }
     return data.data();
   } catch (error) {
-    console.error("Error in getOrdersCounts:", error);
-    LAST_ERROR_TIMESTAMP = Date.now();
+    tripCircuitBreaker(error);
     throw error;
   }
 };
 
 export const getTotalOrdersCounts = async (dates) => {
-  // Circuit breaker check
-  if (Date.now() - LAST_ERROR_TIMESTAMP < ERROR_COOLDOWN_MS) {
-    console.warn("Skipping total aggregation due to recent error (cooldown active)");
+  try {
+    checkCircuitBreaker();
+  } catch (error) {
+    console.warn("Skipping total aggregation due to circuit breaker");
     return [];
   }
 
@@ -100,8 +95,7 @@ export const getTotalOrdersCounts = async (dates) => {
       return result;
     } catch (error) {
       console.error(`Error fetching stats for ${dateKey}:`, error);
-      LAST_ERROR_TIMESTAMP = Date.now(); // Trip the circuit breaker
-      // Return empty/safe object to allow other promises to possibly resolve or at least fail gracefully
+      tripCircuitBreaker(error);
       return { date: date, data: { totalOrders: 0, totalRevenue: 0 } };
     }
   });
@@ -122,8 +116,8 @@ export function useOrdersCounts() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
-      shouldRetryOnError: false,
+      dedupingInterval: 300000, // 5 minutes
+      shouldRetryOnError: false, // Do not retry on error if we are circuit breaking
     }
   );
   if (error) {
@@ -140,7 +134,7 @@ export function useOrdersCountsByTotalDays({ dates }) {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000 * 5,
+      dedupingInterval: 3600000, // 1 hour for historical chart data
       shouldRetryOnError: false,
     }
   );

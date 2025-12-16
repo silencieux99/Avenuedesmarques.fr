@@ -10,10 +10,18 @@ import {
 } from "firebase/firestore";
 import useSWR from "swr";
 
+import { checkCircuitBreaker, tripCircuitBreaker } from "@/lib/circuit_breaker";
+
 export const getProductsCount = async () => {
-  const ref = collection(db, `products`);
-  const data = await getCountFromServer(ref);
-  return data.data().count;
+  try {
+    checkCircuitBreaker();
+    const ref = collection(db, `products`);
+    const data = await getCountFromServer(ref);
+    return data.data().count;
+  } catch (error) {
+    tripCircuitBreaker(error);
+    throw error;
+  }
 };
 
 export function useProductCount() {
