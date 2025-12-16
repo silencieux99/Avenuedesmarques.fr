@@ -27,7 +27,7 @@ export default function CountMeter() {
       <Card
         icon={<TrendingUp className="text-white" />}
         title={"Revenus"}
-        value={`${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format((ordersCounts?.totalRevenue ?? 0) / 100)}`}
+        value={`${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(ordersCounts?.totalRevenue ?? 0)}`}
         color="bg-green-500"
       />
       <Card

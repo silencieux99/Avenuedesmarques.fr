@@ -34,7 +34,7 @@ export const getOrdersCounts = async ({ date }) => {
     }
 
     const data = await getAggregateFromServer(q, {
-      totalRevenue: sum("payment.amount"),
+      totalRevenue: sum("amountTotal"),
       totalOrders: count(),
     });
     if (date) {
@@ -80,7 +80,7 @@ export const getTotalOrdersCounts = async (dates) => {
         ),
         {
           totalOrders: count(),
-          totalRevenue: sum("payment.amount"),
+          totalRevenue: sum("amountTotal"),
         }
       );
 

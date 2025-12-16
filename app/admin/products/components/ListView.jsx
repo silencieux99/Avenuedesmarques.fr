@@ -47,6 +47,7 @@ export default function ListView() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [targetCategory, setTargetCategory] = useState("");
   const [isMoving, setIsMoving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
 
@@ -205,6 +206,38 @@ export default function ListView() {
                 onPress={onOpen}
               >
                 Déplacer
+              </Button>
+              <Button
+                size="sm"
+                color="danger"
+                variant="flat"
+                startContent={<Trash2 size={14} />}
+                onPress={async () => {
+                  if (confirm(`Êtes-vous sûr de vouloir supprimer ces ${selectedCount} produits ?`)) {
+                    setIsDeleting(true);
+                    try {
+                      const batch = writeBatch(db);
+                      const keysToDelete = selectedKeys === "all"
+                        ? filteredProducts.map(p => p.id)
+                        : Array.from(selectedKeys);
+
+                      keysToDelete.forEach(id => {
+                        batch.delete(doc(db, "products", id));
+                      });
+
+                      await batch.commit();
+                      toast.success(`${keysToDelete.length} produits supprimés`);
+                      setSelectedKeys(new Set([]));
+                    } catch (e) {
+                      toast.error("Erreur: " + e.message);
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }
+                }}
+                isLoading={isDeleting}
+              >
+                Supprimer
               </Button>
             </div>
           )}

@@ -30,6 +30,9 @@ const processOrder = async ({ checkout }) => {
         return prev + curr?.price_data?.unit_amount * curr?.quantity;
       }, 0),
     },
+    amountTotal: checkout?.line_items?.reduce((prev, curr) => {
+      return prev + curr?.price_data?.unit_amount * curr?.quantity;
+    }, 0) / 100,
     uid: uid,
     id: checkout?.id,
     paymentMode: "cod",
