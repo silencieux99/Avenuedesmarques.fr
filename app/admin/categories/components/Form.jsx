@@ -92,8 +92,8 @@ export default function Form() {
         className="flex flex-col gap-3"
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="category-name" className="text-gray-500 text-sm">
-            Image <span className="text-red-500">*</span>{" "}
+          <label htmlFor="category-image" className="text-gray-500 text-sm">
+            Image
           </label>
           {image && (
             <div className="flex justify-center items-center p-3">
@@ -123,9 +123,15 @@ export default function Form() {
             placeholder="Enter Name"
             value={data?.name ?? ""}
             onChange={(e) => {
-              handleData("name", e.target.value);
+              const val = e.target.value;
+              handleData("name", val);
+              if (!id) {
+                // Auto generate slug only for new categories or if manually enabled
+                handleData("slug", val.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, ""));
+              }
             }}
             className="border px-4 py-2 rounded-lg w-full focus:outline-none"
+            required
           />
         </div>
         <div className="flex flex-col gap-1">
