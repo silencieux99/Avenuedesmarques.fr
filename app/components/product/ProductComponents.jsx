@@ -304,8 +304,7 @@ export function ProductDetailsAccordion({ description }) {
                 title="Livraison & Retours"
                 content={
                     <p>
-                        Livraison offerte dès 100€ d'achat.<br />
-                        Retours gratuits sous 30 jours.
+                        Livraison offerte dès 100€ d'achat.
                     </p>
                 }
             />
@@ -341,7 +340,6 @@ export function TrustBadges() {
                 </div>
                 <div>
                     <div className="text-xs font-bold uppercase text-neutral-900">Retours Simples</div>
-                    <div className="text-[10px] text-neutral-500">30 jours pour changer d'avis</div>
                 </div>
             </div>
             <div className="flex items-center gap-3">
