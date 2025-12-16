@@ -13,85 +13,34 @@ const getOpenAIClient = () => {
 
 export async function POST(request) {
     try {
-        const { imageUrl, mode = 'luxe', mannequin = null } = await request.json();
+        const openai = getOpenAIClient();
+        // Construire le prompt pour une analyse experte et SEO
+        const promptText = `Tu es un expert mondial en mode, luxe et prêt-à-porter, spécialisé dans l'identification précise de vêtements de marque et l'optimisation SEO pour le e-commerce.
 
-        if (!imageUrl) {
-            return NextResponse.json(
-                { error: 'URL de l\'image requise' },
-                { status: 400 }
-            );
-        }
+MISSION :
+Analyser cette image avec une précision extrême pour identifier la marque, le modèle exacte et les caractéristiques du produit.
 
-        // Définir les informations des mannequins
-        const mannequinInfo = {
-            assia: {
-                nom: 'Assia',
-                taille: '1.75m',
-                mensurations: 'taille 38'
-            },
-            sonia: {
-                nom: 'Sonia',
-                taille: '1.70m',
-                mensurations: 'taille 42'
-            }
-        };
+1. IDENTIFICATION MARQUE & MODÈLE :
+- Identifie la marque EXACTE (ex: Gucci, Zara, Louis Vuitton, Nike, etc.) en analysant les logos, motifs (monogrammes), coupes et détails signatures.
+- Identifie le modèle précis ou le nom de la collection si possible.
 
-        // Construire le prompt selon le mode
-        let promptText = '';
+2. DESCRIPTION & SEO :
+- Rédige un titre optimisé SEO (Marque + Type + Modèle + Caractéristique clé).
+- Rédige une description vendeuse, riche en mots-clés pertinents (matière, coupe, occasion, style), qui donne envie d'acheter.
 
-        if (mode === 'luxe') {
-            promptText = `Tu es un expert en produits de luxe et de mode. Analyse cette image avec une attention particulière aux logos, motifs et détails de marque.
-
-IMPORTANT: Identifie la marque exacte en cherchant:
-- Les logos visibles (LV, Gucci, Hermès, Chanel, Dior, etc.)
-- Les motifs signature (monogramme LV, GG de Gucci, etc.)
-- Les détails caractéristiques de chaque marque
-
-Fournis les informations au format JSON strict:
+FORMAT DE RÉPONSE JSON STRICT :
 {
-  "titre": "Marque + Type de produit (ex: Louis Vuitton Sac Speedy)",
-  "description": "Description détaillée incluant les matériaux, dimensions approximatives, caractéristiques distinctives, motifs, et état visible",
-  "categorie": "Catégorie principale (Sacs à main, Vêtements, Chaussures, Accessoires, Bijoux, Montres)",
-  "sousCategorie": "MARQUE EXACTE (Louis Vuitton, Gucci, Hermès, Chanel, Dior, Prada, Fendi, Balenciaga, etc.)",
-  "couleur": "Couleur(s) principale(s)",
-  "matiere": "Matière principale (Cuir, Toile, Synthétique, etc.)",
-  "etat": "État visible (Neuf avec étiquette, Excellent état, Très bon état, Bon état, État correct)",
-  "tags": ["marque", "type", "couleur", "style", "caractéristique1", "caractéristique2"]
-}
-
-Réponds UNIQUEMENT avec le JSON, sans balises markdown ni texte supplémentaire.`;
-        } else {
-            // Mode vêtement
-            const mannequinData = mannequin && mannequinInfo[mannequin] ? mannequinInfo[mannequin] : null;
-            const mannequinText = mannequinData
-                ? `\n\nINFORMATIONS MANNEQUIN:
-Le mannequin ${mannequinData.nom} mesure ${mannequinData.taille} et porte du ${mannequinData.mensurations}.
-Inclus ces informations dans la description pour aider les clientes à se projeter.`
-                : '';
-
-            promptText = `Tu es un expert en mode féminine et vêtements modestes. Analyse cette image de vêtement porté par un mannequin.
-
-Ta mission:
-- Identifier le type de vêtement (Robe, Abaya, Kimono, Ensemble, Tunique, etc.)
-- Décrire le style, la coupe, les détails (broderies, boutons, ceinture, etc.)
-- Identifier les couleurs et motifs
-- Décrire la matière apparente (Coton, Lin, Satin, Mousseline, etc.)
-- Créer un titre attractif et une description détaillée${mannequinText}
-
-Fournis les informations au format JSON strict:
-{
-  "titre": "Titre accrocheur du vêtement (ex: Robe Longue Élégante à Manches Bouffantes)",
-  "description": "Description détaillée et attractive incluant: le style, la coupe, les détails (manches, col, fermeture), les occasions d'usage, le confort, et les informations du mannequin si fournies. Rédige de manière à donner envie d'acheter.",
-  "categorie": "Catégorie principale (Robes, Abayas, Ensembles, Kimonos, Tuniques, Jupes, Pantalons)",
-  "sousCategorie": "Sous-catégorie ou style (Robe longue, Abaya moderne, Ensemble chic, Kimono léger, etc.)",
-  "couleur": "Couleur(s) principale(s) et secondaire(s)",
-  "matiere": "Matière apparente (Coton, Lin, Polyester, Satin, Mousseline, Crêpe, etc.)",
+  "titre": "Titre SEO optimisé (ex: Sac Gucci Marmont en Cuir Matelassé Noir)",
+  "description": "Description commerciale détaillée (environ 150-200 mots). Mentionne le style, la matière (soie, coton, cuir...), la coupe, les détails (boutons dorés, broderies...), et comment le porter. Ton professionnel et haut de gamme.",
+  "categorie": "Catégorie principale (Sacs, Vêtements, Chaussures, Accessoires)",
+  "sousCategorie": "Type précis (Robe de soirée, Baskets montantes, Sac bandoulière)",
+  "couleur": "Couleur principale précise (ex: Bleu Marine, Bordeaux, Écru)",
+  "matiere": "Matière principale identifiée ou supposée avec haute probabilité",
   "etat": "Neuf avec étiquette",
-  "tags": ["type", "style", "couleur", "occasion", "caractéristique1", "caractéristique2", "modeste", "élégant"]
+  "tags": ["marque", "type", "couleur", "matière", "style", "tendance", "mots-clés SEO"]
 }
 
-Réponds UNIQUEMENT avec le JSON, sans balises markdown ni texte supplémentaire.`;
-        }
+Réponds UNIQUEMENT avec le JSON validé, sans aucun texte avant ou après.`;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o",

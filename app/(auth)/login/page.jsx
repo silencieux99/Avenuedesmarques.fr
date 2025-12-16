@@ -72,20 +72,22 @@ export default function Page() {
                 type="email"
                 name="user-email"
                 id="user-email"
-                value={data?.email}
+                value={data?.email ?? ""}
                 onChange={(e) => handleData("email", e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
                 required
+                aria-label="Email"
               />
               <input
                 placeholder="Mot de passe"
                 type="password"
                 name="user-password"
                 id="user-password"
-                value={data?.password}
+                value={data?.password ?? ""}
                 onChange={(e) => handleData("password", e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent focus:bg-white transition-all"
                 required
+                aria-label="Mot de passe"
               />
             </div>
 
@@ -145,7 +147,7 @@ function SignInWithGoogleComponent() {
     <Button
       isLoading={isLoading}
       isDisabled={isLoading}
-      onClick={handleLogin}
+      onPress={handleLogin}
       className="w-full bg-white text-gray-700 border border-gray-200 py-6 rounded-lg font-medium text-xs tracking-wider uppercase hover:bg-gray-50 hover:border-gray-300 transition-all"
     >
       Continuer avec Google
