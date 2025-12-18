@@ -105,7 +105,6 @@ export default function BasicDetails({ data, handleData }) {
           Category <span className="text-red-500">*</span>{" "}
         </label>
         <select
-          type="text"
           id="product-category"
           name="product-category"
           value={data?.categoryId ?? ""}
@@ -115,14 +114,45 @@ export default function BasicDetails({ data, handleData }) {
           className="border px-4 py-2 rounded-lg w-full outline-none"
           required
         >
-          <option value="">Select Category</option>
-          {categories?.map((item) => {
-            return (
-              <option value={item?.id} key={item?.id}>
-                {item?.name}
-              </option>
-            );
-          })}
+          <option value="">Sélectionner une catégorie</option>
+          {(() => {
+            // Helper to build sorted flat tree
+            if (!categories) return null;
+
+            const roots = categories.filter(c => !c.parentId);
+            const childrenMap = {};
+            categories.forEach(c => {
+              if (c.parentId) {
+                if (!childrenMap[c.parentId]) childrenMap[c.parentId] = [];
+                childrenMap[c.parentId].push(c);
+              }
+            });
+
+            // Sort roots
+            roots.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+
+            const options = [];
+            roots.forEach(root => {
+              // Add Root
+              options.push(
+                <option key={root.id} value={root.id} className="font-bold bg-gray-50">
+                  {root.name.toUpperCase()}
+                </option>
+              );
+              // Add Children
+              if (childrenMap[root.id]) {
+                childrenMap[root.id].sort((a, b) => (a.rank || 0) - (b.rank || 0)); // Sort children if needed
+                childrenMap[root.id].forEach(child => {
+                  options.push(
+                    <option key={child.id} value={child.id}>
+                      &nbsp;&nbsp;&nbsp;&nbsp;↳ {child.name}
+                    </option>
+                  );
+                });
+              }
+            });
+            return options;
+          })()}
         </select>
       </div>
 

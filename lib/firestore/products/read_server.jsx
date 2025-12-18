@@ -40,6 +40,7 @@ export const getProducts = async () => {
 };
 
 export const getProductsByCategory = async ({ categoryId }) => {
+  if (!categoryId) return [];
   const list = await getDocs(
     query(
       collection(db, "products"),
