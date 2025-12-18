@@ -387,12 +387,45 @@ export default function AIProductCreator() {
                                                 onChange={(e) => setSelectedCategoryId(e.target.value)}
                                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                                             >
-                                                <option value="">Sélectionnez une catégorie</option>
-                                                {categories?.map(cat => (
-                                                    <option key={cat.id} value={cat.id}>
-                                                        {cat.name}
-                                                    </option>
-                                                ))}
+                                                <option value="">Sélectionner une catégorie</option>
+                                                {(() => {
+                                                    // Helper to build sorted flat tree
+                                                    if (!categories) return null;
+
+                                                    const roots = categories.filter(c => !c.parentId);
+                                                    const childrenMap = {};
+                                                    categories.forEach(c => {
+                                                        if (c.parentId) {
+                                                            if (!childrenMap[c.parentId]) childrenMap[c.parentId] = [];
+                                                            childrenMap[c.parentId].push(c);
+                                                        }
+                                                    });
+
+                                                    // Sort roots
+                                                    roots.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+
+                                                    const options = [];
+                                                    roots.forEach(root => {
+                                                        // Add Root
+                                                        options.push(
+                                                            <option key={root.id} value={root.id} className="font-bold bg-gray-50">
+                                                                {root.name.toUpperCase()}
+                                                            </option>
+                                                        );
+                                                        // Add Children
+                                                        if (childrenMap[root.id]) {
+                                                            childrenMap[root.id].sort((a, b) => (a.rank || 0) - (b.rank || 0)); // Sort children if needed
+                                                            childrenMap[root.id].forEach(child => {
+                                                                options.push(
+                                                                    <option key={child.id} value={child.id}>
+                                                                        &nbsp;&nbsp;&nbsp;&nbsp;↳ {child.name}
+                                                                    </option>
+                                                                );
+                                                            });
+                                                        }
+                                                    });
+                                                    return options;
+                                                })()}
                                             </select>
                                         </div>
 
