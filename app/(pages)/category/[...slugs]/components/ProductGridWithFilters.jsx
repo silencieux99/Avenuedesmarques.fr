@@ -24,10 +24,6 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
         };
     }, [products]);
 
-    // Update range when products change (optional, or stick to absolute bounds)
-    // useMemo(() => setPriceRange([minPrice, maxPrice]), [minPrice, maxPrice]); 
-    // ^ Avoiding auto-reset to avoid UX annoyance during filtering if logic changes.
-
     const filteredProducts = useMemo(() => {
         let result = [...products];
 
@@ -48,9 +44,8 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
         } else if (sortOrder === "price-desc") {
             result.sort((a, b) => (b.price || 0) - (a.price || 0));
         } else {
-            // Newest (default)
-            // Assuming timestampCreate is object or string, simple compare
-            // result.sort((a, b) => b.timestampCreate - a.timestampCreate);
+            // Newest (default) -- assuming we'd use a real date, but for now relying on existing order or adding a date check if data exists
+            // result.sort...
         }
 
         return result;
@@ -63,107 +58,132 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
     return (
         <div className="flex flex-col lg:flex-row gap-8 relative">
 
-            {/* Mobile Filter Button */}
-            <div className="lg:hidden flex justify-between items-center mb-4 sticky top-20 z-30 bg-white/80 backdrop-blur-md p-4 rounded-xl border border-gray-100 shadow-sm">
+            {/* Mobile Filter Button - Sticky below Header */}
+            <div className="lg:hidden flex justify-between items-center mb-4 sticky top-[80px] z-30 bg-white/90 backdrop-blur-md p-4 rounded-xl border border-gray-100 shadow-sm mx-auto w-full max-w-sm">
                 <span className="font-semibold text-gray-900">{filteredProducts.length} Produits</span>
                 <Button
-                    variant="flat"
+                    size="sm"
+                    variant="solid"
+                    color="primary"
+                    className="bg-black text-white"
                     startContent={<SlidersHorizontal size={16} />}
                     onPress={() => setIsMobileFilterOpen(true)}
                 >
-                    Filtrer & Trier
+                    Filtrer
                 </Button>
             </div>
 
-            {/* Sidebar Filters (Desktop) */}
+            {/* Sidebar Filters */}
+            {/* 
+                Desktop: Sticky under header 
+                Mobile: Fixed full height drawer z-[90] to be above header 
+            */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
-                lg:translate-x-0 lg:static lg:w-64 lg:shadow-none lg:block
+                fixed inset-y-0 left-0 z-[99] w-[85vw] max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+                lg:translate-x-0 lg:sticky lg:top-32 lg:z-0 lg:w-64 lg:shadow-none lg:block lg:self-start lg:h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-4
                 ${isMobileFilterOpen ? "translate-x-0" : "-translate-x-full"}
-                flex flex-col
+                flex flex-col rounded-r-2xl lg:rounded-none
             `}>
-                <div className="p-6 flex-1 overflow-y-auto">
-                    <div className="flex justify-between items-center lg:hidden mb-6">
+                <div className="p-6 flex-1 overflow-y-auto lg:p-0">
+                    <div className="flex justify-between items-center lg:hidden mb-8">
                         <h2 className="text-xl font-bold font-serif uppercase">Filtres</h2>
                         <Button isIconOnly variant="light" onPress={() => setIsMobileFilterOpen(false)}>
                             <X size={24} />
                         </Button>
                     </div>
 
-                    <div className="space-y-8">
-                        {/* Sort (Visible on Mobile inside Drawer, Desktop has Sort Dropdown usually on top) */}
+                    <div className="space-y-8 pb-20 lg:pb-0">
+                        {/* Sort (Visible sort on Mobile only) */}
                         <div className="lg:hidden">
-                            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wider">Trier par</h3>
-                            <div className="flex flex-col gap-2">
+                            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">Trier par</h3>
+                            <div className="flex flex-wrap gap-2">
                                 <Button
-                                    className={`justify-start ${sortOrder === 'newest' ? 'bg-black text-white' : 'bg-gray-100'}`}
+                                    size="sm"
+                                    className={`justify-start border ${sortOrder === 'newest' ? 'bg-black text-white border-black' : 'bg-transparent border-gray-200'}`}
                                     onPress={() => setSortOrder('newest')}
                                 >
                                     Nouveautés
                                 </Button>
                                 <Button
-                                    className={`justify-start ${sortOrder === 'price-asc' ? 'bg-black text-white' : 'bg-gray-100'}`}
+                                    size="sm"
+                                    className={`justify-start border ${sortOrder === 'price-asc' ? 'bg-black text-white border-black' : 'bg-transparent border-gray-200'}`}
                                     onPress={() => setSortOrder('price-asc')}
                                 >
-                                    Prix croissant
+                                    Prix -
                                 </Button>
                                 <Button
-                                    className={`justify-start ${sortOrder === 'price-desc' ? 'bg-black text-white' : 'bg-gray-100'}`}
+                                    size="sm"
+                                    className={`justify-start border ${sortOrder === 'price-desc' ? 'bg-black text-white border-black' : 'bg-transparent border-gray-200'}`}
                                     onPress={() => setSortOrder('price-desc')}
                                 >
-                                    Prix décroissant
+                                    Prix +
                                 </Button>
                             </div>
                         </div>
 
                         {/* Brands Filter */}
                         <div>
-                            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wider">Marques</h3>
-                            <CheckboxGroup
-                                value={selectedBrands}
-                                onValueChange={setSelectedBrands}
-                                classNames={{
-                                    wrapper: "gap-3"
-                                }}
-                            >
-                                {activeBrands?.map(brand => (
-                                    <Checkbox
-                                        key={brand.id}
-                                        value={brand.id}
-                                        classNames={{
-                                            label: "text-sm text-gray-600 ml-1 group-data-[selected=true]:text-black"
-                                        }}
-                                    >
-                                        {brand.name}
-                                    </Checkbox>
-                                ))}
-                            </CheckboxGroup>
+                            <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-900 lg:text-gray-500">Marques</h3>
+                            {activeBrands && activeBrands.length > 0 ? (
+                                <CheckboxGroup
+                                    value={selectedBrands}
+                                    onValueChange={setSelectedBrands}
+                                    classNames={{
+                                        wrapper: "gap-3"
+                                    }}
+                                >
+                                    {activeBrands.map(brand => (
+                                        <Checkbox
+                                            key={brand.id}
+                                            value={brand.id}
+                                            classNames={{
+                                                wrapper: "before:border-gray-300",
+                                                label: "text-base lg:text-sm text-gray-700 ml-1"
+                                            }}
+                                        >
+                                            {brand.name}
+                                        </Checkbox>
+                                    ))}
+                                </CheckboxGroup>
+                            ) : (
+                                <p className="text-sm text-gray-400 italic">Aucune marque disponible.</p>
+                            )}
                         </div>
 
-                        {/* Price Filter */}
-                        <div>
-                            <h3 className="font-semibold mb-6 text-sm uppercase tracking-wider">Prix</h3>
-                            <Slider
-                                step={10}
-                                minValue={0}
-                                maxValue={maxPrice > 0 ? maxPrice : 2000}
-                                value={priceRange}
-                                onChange={setPriceRange}
-                                formatOptions={{ style: "currency", currency: "EUR" }}
-                                className="max-w-md"
-                                size="sm"
-                                color="foreground"
-                                startContent={<span className="text-xs text-gray-500 w-8">{priceRange[0]}€</span>}
-                                endContent={<span className="text-xs text-gray-500 w-8">{priceRange[1]}€</span>}
-                            />
+                        {/* Price Filter - Improved Padding */}
+                        <div className="pr-4 lg:pr-0">
+                            <h3 className="font-semibold mb-6 text-sm uppercase tracking-wider text-gray-900 lg:text-gray-500">Prix</h3>
+                            <div className="px-2"> { /* Extra padding container for slider handles */}
+                                <Slider
+                                    step={10}
+                                    minValue={0}
+                                    maxValue={maxPrice > 0 ? maxPrice : 2000}
+                                    value={priceRange}
+                                    onChange={setPriceRange}
+                                    formatOptions={{ style: "currency", currency: "EUR" }}
+                                    className="max-w-md"
+                                    size="sm"
+                                    color="foreground"
+                                    // Customizing render behavior for better mobile touch
+                                    classNames={{
+                                        track: "h-1 bg-gray-200",
+                                        filler: "bg-black",
+                                        thumb: "w-5 h-5 bg-white border-2 border-black shadow-sm after:bg-black"
+                                    }}
+                                />
+                            </div>
+                            <div className="flex justify-between mt-4 text-sm font-medium text-gray-900">
+                                <span>{priceRange[0]}€</span>
+                                <span>{priceRange[1]}€</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Mobile Apply Button */}
-                <div className="p-4 border-t lg:hidden">
-                    <Button fullWidth className="bg-black text-white" onPress={() => setIsMobileFilterOpen(false)}>
-                        Afficher {filteredProducts.length} produits
+                {/* Mobile Apply Button Fixed Bottom */}
+                <div className="p-4 border-t bg-white lg:hidden mt-auto">
+                    <Button fullWidth className="bg-black text-white h-12 font-medium" onPress={() => setIsMobileFilterOpen(false)}>
+                        Voir {filteredProducts.length} produits
                     </Button>
                 </div>
             </aside>
@@ -171,13 +191,13 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
             {/* Overlay for Mobile */}
             {isMobileFilterOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/60 z-[90] lg:hidden backdrop-blur-sm"
                     onClick={() => setIsMobileFilterOpen(false)}
                 />
             )}
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0"> {/* min-w-0 prevents flex items from overflowing */}
                 {/* Desktop Top Bar (Sort) */}
                 <div className="hidden lg:flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
                     <p className="text-gray-500 text-sm">{filteredProducts.length} résultats</p>
@@ -189,7 +209,7 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
                                 <Button
                                     variant="light"
                                     endContent={<ChevronDown size={14} />}
-                                    className="capitalize font-medium"
+                                    className="capitalize font-medium text-gray-900"
                                 >
                                     {sortOrder === 'newest' && "Nouveautés"}
                                     {sortOrder === 'price-asc' && "Prix croissant"}
@@ -215,7 +235,7 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
                     {filteredProducts.length > 0 ? (
                         <motion.div
                             layout
-                            className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-x-8 md:gap-y-12"
+                            className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-x-6 md:gap-y-10"
                         >
                             <AnimatePresence>
                                 {filteredProducts.map((item) => (
@@ -233,17 +253,19 @@ export default function ProductGridWithFilters({ products, brands, categoryName 
                         </motion.div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                            <p className="text-xl md:text-2xl text-gray-500 font-serif">
-                                Aucun produit ne correspond à vos critères.
+                            <div className="w-16 h-1 bg-gray-200 rounded-full mb-4" />
+                            <p className="text-xl md:text-2xl text-gray-400 font-serif">
+                                0 produit
                             </p>
                             <Button
                                 variant="light"
+                                className="text-black underline"
                                 onPress={() => {
                                     setSelectedBrands([]);
-                                    setPriceRange([0, maxPrice]);
+                                    setPriceRange([minPrice, maxPrice]);
                                 }}
                             >
-                                Réinitialiser les filtres
+                                Tout effacer
                             </Button>
                         </div>
                     )}
