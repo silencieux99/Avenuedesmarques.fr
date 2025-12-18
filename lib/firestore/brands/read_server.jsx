@@ -12,5 +12,5 @@ export const getBrand = async ({ id }) => {
 
 export const getBrands = async () => {
   const list = await getDocs(collection(db, "brands"));
-  return list.docs.map((snap) => snap.data());
+  return list.docs.map((snap) => ({ id: snap.id, ...snap.data() }));
 };

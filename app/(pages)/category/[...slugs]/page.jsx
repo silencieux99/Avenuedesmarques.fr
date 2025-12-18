@@ -1,6 +1,8 @@
 import { ProductCard } from "@/app/components/Products";
 import { getCategoryBySlug, getCategoriesBySlug, getCategories } from "@/lib/firestore/categories/read_server";
 import { getProductsByCategoryIds } from "@/lib/firestore/products/read_server";
+import { getBrands } from "@/lib/firestore/brands/read_server";
+import ProductGridWithFilters from "./components/ProductGridWithFilters";
 
 export async function generateMetadata({ params }) {
     const { slugs } = params;
@@ -70,36 +72,29 @@ export default async function Page({ params }) {
     // Deduplicate IDs
     allTargetIds = [...new Set(allTargetIds)];
 
-    const products = await getProductsByCategoryIds({ categoryIds: allTargetIds });
+    const [products, brands] = await Promise.all([
+        getProductsByCategoryIds({ categoryIds: allTargetIds }),
+        getBrands()
+    ]);
 
     // Use the name of the first matched category for display
     const category = targetCategories[0];
 
     return (
         <main className="min-h-screen pt-28 pb-10 px-4 md:px-8 bg-background">
-            <div className="max-w-[1400px] mx-auto">
+            <div className="max-w-[1600px] mx-auto">
                 <div className="mb-8 md:mb-12 text-center space-y-4">
                     <h1 className="font-serif text-3xl md:text-5xl font-bold text-gray-900 uppercase tracking-wide">
                         {category?.name}
                     </h1>
                     <div className="w-20 h-1 bg-accent mx-auto" />
-                    {/* Breadcrumbs could go here using `slugs` array */}
                 </div>
 
-                {products?.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-                        {products?.map((item) => (
-                            <ProductCard product={item} key={item?.id} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <p className="text-xl md:text-2xl text-gray-500 font-serif">
-                            Aucun produit trouvé dans cette catégorie.
-                        </p>
-                        <p className="text-gray-400">Revenez bientôt pour découvrir nos nouvelles collections.</p>
-                    </div>
-                )}
+                <ProductGridWithFilters
+                    products={products}
+                    brands={brands}
+                    categoryName={category?.name}
+                />
             </div>
         </main>
     );
