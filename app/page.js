@@ -46,8 +46,14 @@ export default async function Home() {
     const categoryProducts = products.filter(p => p.categoryId === category.id).slice(0, 4); // Limit to 4 for homepage
     if (categoryProducts.length > 0) {
       const categoryPath = buildCategoryPath(category);
+
+      // Resolve Parent Name for display
+      const parent = categories.find(c => c.id === category.parentId);
+      const displayName = parent ? `${category.name} (${parent.name})` : category.name;
+
       acc.push({
         category: category,
+        displayName: displayName,
         products: categoryProducts,
         categoryPath: categoryPath
       });
@@ -71,7 +77,7 @@ export default async function Home() {
                 <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-4 text-center md:text-left">
                   <div className="space-y-2">
                     <h2 className="font-serif text-3xl md:text-4xl font-bold uppercase tracking-wide">
-                      {section.category.name}
+                      {section.displayName}
                     </h2>
                     <div className="h-1 w-20 bg-accent mx-auto md:mx-0" />
                   </div>
