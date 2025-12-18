@@ -105,11 +105,22 @@ export default function AIProductCreator() {
             const analyzeResponse = await fetch("/api/admin/products/analyze-image", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    imageUrl: uploadedUrls[0],
-                    mode: mode,
-                    mannequin: mode === 'vetement' ? mannequin : null
-                }),
+                body: JSON.stringify((() => {
+                    const payload = {
+                        mode: mode,
+                        mannequin: mode === 'vetement' ? mannequin : null
+                    };
+
+                    if (mode === 'bulk') {
+                        // Pick 3 random images to save tokens but give context
+                        const shuffled = [...uploadedUrls].sort(() => 0.5 - Math.random());
+                        payload.imageUrls = shuffled.slice(0, 3);
+                    } else {
+                        // Single mode: send the primary image
+                        payload.imageUrl = uploadedUrls[primaryImageIndex] || uploadedUrls[0];
+                    }
+                    return payload;
+                })()),
             });
 
             if (!analyzeResponse.ok) throw new Error("Erreur lors de l'analyse");
@@ -138,34 +149,67 @@ export default function AIProductCreator() {
         try {
             const numPrice = parseFloat(price);
             const numSalePrice = salePrice ? parseFloat(salePrice) : numPrice;
+            const timestamp = Date.now();
 
-            // Prepare data for Avenuedesmarques schema
-            const productData = {
-                title: analyzedData.titre,
-                slug: analyzedData.titre.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, ""),
-                shortDescription: shortDescription,
-                description: analyzedData.description, // HTML/Rich text usually, but string works
-                brandId: selectedBrandId,
-                categoryId: selectedCategoryId,
-                stock: parseInt(stock) || 1,
-                price: numPrice,
-                salePrice: numSalePrice,
-                isFeatured: false,
-                sizes: selectedSizes,
-                // Add extra fields as needed if schema supports them, or append to description
-            };
+            if (mode === 'bulk') {
+                // BULK MODE: One product per image
+                const promises = uploadedImageUrls.map(async (imgUrl, index) => {
+                    // Generate semi-unique slug for each variant
+                    const baseSlug = analyzedData.titre.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+                    const uniqueSlug = `${baseSlug}-${timestamp}-${index}`;
 
-            // Determine feature image vs list
-            const featureImageUrl = uploadedImageUrls[primaryImageIndex];
-            const otherImages = uploadedImageUrls.filter((_, i) => i !== primaryImageIndex);
+                    const productData = {
+                        title: analyzedData.titre, // Shared Title
+                        slug: uniqueSlug,
+                        shortDescription: shortDescription,
+                        description: analyzedData.description,
+                        brandId: selectedBrandId,
+                        categoryId: selectedCategoryId,
+                        stock: parseInt(stock) || 1,
+                        price: numPrice,
+                        salePrice: numSalePrice,
+                        isFeatured: false,
+                        sizes: selectedSizes,
+                    };
 
-            await createProductFromAI({
-                data: productData,
-                featureImageURL: featureImageUrl,
-                imageListURLs: otherImages
-            });
+                    // Create individual product
+                    return createProductFromAI({
+                        data: productData,
+                        featureImageURL: imgUrl,
+                        imageListURLs: [] // No extra images for bulk items usually, or could add generic ones? Single image per SKU is safer for mass import.
+                    });
+                });
 
-            toast.success("Produit créé avec succès !");
+                await Promise.all(promises);
+                toast.success(`${uploadedImageUrls.length} produits créés avec succès !`);
+
+            } else {
+                // STANDARD MODE: Single product with gallery
+                const productData = {
+                    title: analyzedData.titre,
+                    slug: analyzedData.titre.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "") + `-${timestamp}`, // safer unique slug
+                    shortDescription: shortDescription,
+                    description: analyzedData.description,
+                    brandId: selectedBrandId,
+                    categoryId: selectedCategoryId,
+                    stock: parseInt(stock) || 1,
+                    price: numPrice,
+                    salePrice: numSalePrice,
+                    isFeatured: false,
+                    sizes: selectedSizes,
+                };
+
+                const featureImageUrl = uploadedImageUrls[primaryImageIndex];
+                const otherImages = uploadedImageUrls.filter((_, i) => i !== primaryImageIndex);
+
+                await createProductFromAI({
+                    data: productData,
+                    featureImageURL: featureImageUrl,
+                    imageListURLs: otherImages
+                });
+                toast.success("Produit créé avec succès !");
+            }
+
             setTimeout(() => {
                 router.push("/admin/products");
             }, 1500);
@@ -212,7 +256,22 @@ export default function AIProductCreator() {
                         >
                             💎 Luxe
                         </button>
+                        <button
+                            onClick={() => setMode('bulk')}
+                            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${mode === 'bulk'
+                                ? 'bg-orange-600 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            📦 Bulk (Lot)
+                        </button>
                     </div>
+                    {mode === 'bulk' && (
+                        <div className="mt-3 p-3 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-100">
+                            ℹ️ <strong>Mode Bulk :</strong> L'IA va générer un titre et une description génériques (sans préciser la couleur).
+                            En publiant, cela créera <strong>une fiche produit distincte pour chaque photo uploadée</strong> avec les mêmes informations (Prix, Marque, Categorie).
+                        </div>
+                    )}
                 </div>
 
                 {/* Mannequin Selection (only for vetement mode) */}
